@@ -20,6 +20,7 @@ export function fmtShort(d: Date | null | undefined): string {
     weekday: "short",
     day: "numeric",
     month: "short",
+    timeZone: "UTC", // datas são guardadas como meia-noite UTC (@db.Date)
   });
 }
 
@@ -29,6 +30,7 @@ export function fmtLong(d: Date | null | undefined): string {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 

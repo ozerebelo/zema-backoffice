@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { requireUser } from "@/lib/auth";
 
 function str(v: FormDataEntryValue | null): string | null {
   const t = typeof v === "string" ? v.trim() : "";
@@ -64,6 +65,7 @@ export async function updateCliente(id: string, fd: FormData) {
 }
 
 export async function deleteCliente(id: string) {
+  await requireUser();
   await prisma.cliente.delete({ where: { id } });
   revalidatePath("/clientes");
   redirect("/clientes");

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { requireUser } from "@/lib/auth";
 import { parseDateOnly } from "@/lib/dates";
 import type { FinState } from "@prisma/client";
 
@@ -33,6 +34,7 @@ export async function updatePropostaEstado(id: string, estado: FinState) {
 }
 
 export async function deleteRecibo(id: string) {
+  await requireUser();
   await prisma.recibo.delete({ where: { id } });
   revalidateFin();
 }

@@ -2,11 +2,9 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { prisma } from "./db";
+import { authSecret as secret } from "./auth-secret";
 
 const COOKIE = "zema_session";
-const secret = new TextEncoder().encode(
-  process.env.AUTH_SECRET ?? "insecure-dev-secret"
-);
 
 export async function hashPassword(plain: string): Promise<string> {
   return bcrypt.hash(plain, 10);

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { requireUser } from "@/lib/auth";
 import type { LeadStage } from "@prisma/client";
 
 function num(v: FormDataEntryValue | null): number {
@@ -60,6 +61,7 @@ export async function updateLead(id: string, fd: FormData) {
 }
 
 export async function deleteLead(id: string) {
+  await requireUser();
   await prisma.lead.delete({ where: { id } });
   revalidatePath("/comercial");
   redirect("/comercial");

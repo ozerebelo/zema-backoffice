@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { requireUser } from "@/lib/auth";
 import { parseDateOnly } from "@/lib/dates";
 
 const COLORS = [
@@ -130,6 +131,7 @@ export async function updateProjeto(id: string, fd: FormData) {
 }
 
 export async function deleteProjeto(id: string) {
+  await requireUser();
   const p = await prisma.projeto.findUnique({ where: { id } });
   await prisma.projeto.delete({ where: { id } });
   if (p) {
@@ -211,6 +213,7 @@ export async function addEpisode(projetoId: string) {
 }
 
 export async function removeEpisode(episodeId: string) {
+  await requireUser();
   const ep = await prisma.episodeSchedule.findUnique({ where: { id: episodeId } });
   if (!ep) return;
   await prisma.episodeSchedule.delete({ where: { id: episodeId } });
