@@ -34,8 +34,10 @@ export default async function ProducaoPage({ searchParams }: { searchParams: Pro
   const year = sp.ano && sp.ano !== "all" ? Number(sp.ano) : null;
   const q = (sp.q ?? "").toLowerCase();
 
-  // Data de referência: última entrega dos episódios → prazo/receção → último recibo.
+  // Data de referência: entrega real do projeto → última entrega dos episódios
+  // → prazo/receção → último recibo.
   const refDate = (p: (typeof projetos)[number]): Date | null => {
+    if (p.entregaReal) return p.entregaReal;
     const epDates = p.episodios
       .map((e) => e.entregaReal ?? e.entrega)
       .filter(Boolean) as Date[];

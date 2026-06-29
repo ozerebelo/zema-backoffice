@@ -142,8 +142,57 @@ export async function deleteProjeto(id: string) {
   redirect("/producao");
 }
 
+function logProjHistory(projetoId: string, action: string, detail?: string) {
+  const now = new Date();
+  const tsRaw =
+    String(now.getDate()).padStart(2, "0") +
+    "/" +
+    String(now.getMonth() + 1).padStart(2, "0") +
+    " " +
+    String(now.getHours()).padStart(2, "0") +
+    "h" +
+    String(now.getMinutes()).padStart(2, "0");
+  return prisma.projetoHistory.create({
+    data: { projetoId, ts: now, tsRaw, action, detail: detail ?? null },
+  });
+}
+
+/** Define a fase do projeto (sem episódios). Marcar "Entregue" (fase 4) regista
+ *  a data real de entrega (hoje, se ainda não definida) e o histórico; sair de
+ *  entregue limpa a data. */
 export async function quickSetProjetoFase(projetoId: string, fase: number) {
-  await prisma.projeto.update({ where: { id: projetoId }, data: { fase } });
+  const p = await prisma.projeto.findUnique({ where: { id: projetoId } });
+  if (!p) return;
+
+  const data: { fase: number; entregaReal?: Date | null } = { fase };
+  if (fase === 4) {
+    if (!p.entregaReal) data.entregaReal = new Date();
+    if (p.fase !== 4) await logProjHistory(projetoId, "Projeto entregue");
+  } else if (p.fase === 4) {
+    data.entregaReal = null; // já não está entregue → solta a data
+  }
+
+  await prisma.projeto.update({ where: { id: projetoId }, data });
+  revalidatePath("/producao");
+  revalidatePath(`/producao/${projetoId}`);
+  revalidatePath("/");
+}
+
+/** Define a data real de entrega do projeto. Com data → marca entregue (fase 4)
+ *  e regista histórico; a limpar → reverte para Deliverables (fase 3). */
+export async function setProjetoEntregaReal(projetoId: string, value: string | null) {
+  const p = await prisma.projeto.findUnique({ where: { id: projetoId } });
+  if (!p) return;
+
+  const date = parseDateOnly(value);
+  await prisma.projeto.update({
+    where: { id: projetoId },
+    data: { entregaReal: date, fase: date ? 4 : p.fase === 4 ? 3 : p.fase },
+  });
+  if (date && p.fase !== 4) {
+    await logProjHistory(projetoId, "Projeto entregue", value!);
+  }
+
   revalidatePath("/producao");
   revalidatePath(`/producao/${projetoId}`);
   revalidatePath("/");

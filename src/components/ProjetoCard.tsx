@@ -65,7 +65,7 @@ export function ProjetoCard({ p }: { p: Proj }) {
       {/* Phase quick-advance (non-episodic) */}
       {total === 0 && (
         <div className={styles.phaseBtns}>
-          {PSHORT.slice(0, 4).map((ph, i) => {
+          {PSHORT.map((ph, i) => {
             const cur = p.fase === i;
             const done = p.fase > i;
             return (

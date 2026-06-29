@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Page } from "@/components/Page";
 import { EpisodeCard } from "@/components/EpisodeCard";
+import { ProjetoFase } from "@/components/ProjetoFase";
 import { addEpisode } from "../projeto-actions";
-import { PROD_PHASES, faseLabel } from "@/lib/domain";
 import { fmtMoney, fmtShort, toDateInput } from "@/lib/dates";
 import styles from "./detalhe.module.css";
 
@@ -110,14 +110,14 @@ export default async function ProjetoDetailPage({
           {/* Projeto sem episódios: fase global */}
           {p.episodios.length === 0 && (
             <>
-              <div className={styles.section}>Fase</div>
-              <div className="card" style={{ padding: 16, marginBottom: 14 }}>
-                <strong style={{ color: "var(--ink)" }}>{faseLabel(p.fase)}</strong>
-                {p.prazo && (
-                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
-                    Prazo: {fmtShort(p.prazo)}
-                  </div>
-                )}
+              <div className={styles.section} style={{ marginBottom: 10 }}>Fase</div>
+              <div style={{ marginBottom: 14 }}>
+                <ProjetoFase
+                  projetoId={p.id}
+                  fase={p.fase}
+                  entregaReal={toDateInput(p.entregaReal)}
+                  prazoLabel={p.prazo ? fmtShort(p.prazo) : null}
+                />
               </div>
               <form action={addEpisode.bind(null, p.id)} style={{ marginBottom: 22 }}>
                 <button type="submit" className="btn btn-ghost btn-sm">
