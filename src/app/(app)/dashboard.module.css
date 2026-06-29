@@ -38,6 +38,10 @@
 .cardHead {
   padding: 13px 16px;
   border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
 }
 .cardTitle {
   font-size: 12px;

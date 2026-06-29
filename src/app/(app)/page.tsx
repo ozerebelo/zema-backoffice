@@ -124,7 +124,7 @@ export default async function DashboardPage() {
               const txt = u.dias < 0 ? `${Math.abs(u.dias)}d atraso` : u.dias === 0 ? "hoje" : `${u.dias}d`;
               return (
                 <Link href={`/producao/${u.id}`} className={styles.urgRow} key={i}>
-                  <div style={{ minWidth: 0 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
                     <div className={styles.urgTitle}>{u.titulo}</div>
                     <div className={styles.urgSub}>
                       {u.cliente} · {u.label} · {fmtShort(u.date)}
@@ -144,7 +144,7 @@ export default async function DashboardPage() {
             {recentes.length === 0 && <div className={styles.empty}>Sem movimentos recentes</div>}
             {recentes.map((m, i) => (
               <Link href={`/producao/${m.id}`} className={styles.urgRow} key={i}>
-                <div style={{ minWidth: 0, display: "flex", alignItems: "center", gap: 9 }}>
+                <div style={{ minWidth: 0, flex: 1, display: "flex", alignItems: "center", gap: 9 }}>
                   <span
                     aria-hidden
                     style={{
@@ -152,6 +152,7 @@ export default async function DashboardPage() {
                       fontWeight: 800,
                       fontSize: 15,
                       lineHeight: 1,
+                      flexShrink: 0,
                     }}
                   >
                     {m.kind === "entrega" ? "↑" : "↓"}
@@ -161,7 +162,7 @@ export default async function DashboardPage() {
                     <div className={styles.urgSub}>{m.cliente} · {m.label}</div>
                   </div>
                 </div>
-                <span className={styles.urgSub} style={{ whiteSpace: "nowrap" }}>{fmtShort(m.date)}</span>
+                <span className={styles.urgSub} style={{ whiteSpace: "nowrap", flexShrink: 0 }}>{fmtShort(m.date)}</span>
               </Link>
             ))}
           </div>
