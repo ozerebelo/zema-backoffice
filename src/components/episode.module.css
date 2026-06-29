@@ -1,0 +1,103 @@
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  transition: opacity 0.12s;
+}
+.card[aria-busy="true"] {
+  opacity: 0.55;
+}
+.done {
+  border-color: rgba(26, 124, 62, 0.35);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.epNum {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.tags {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.remove {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  display: flex;
+  padding: 2px;
+  border-radius: 4px;
+}
+.remove:hover {
+  color: var(--red);
+  background: var(--red-bg);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 10px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.field span {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.field span.real {
+  color: var(--green-fg);
+}
+.field input {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--cream);
+  color: var(--text-primary);
+  color-scheme: light dark;
+}
+.field input:focus {
+  outline: none;
+  border-color: var(--border-strong);
+  background: var(--white);
+}
+
+.faseRow {
+  display: flex;
+  gap: 3px;
+  margin-top: 10px;
+}
+.faseBtn {
+  flex: 1;
+  padding: 4px 0;
+  font-size: 10px;
+  font-weight: 700;
+  border: none;
+  border-radius: 5px;
+  background: rgba(18, 40, 76, 0.06);
+  color: var(--text-muted);
+  font-family: inherit;
+}
+.faseBtn:hover {
+  background: rgba(18, 40, 76, 0.12);
+}
+.faseActive {
+  background: var(--navy);
+  color: #fff;
+}

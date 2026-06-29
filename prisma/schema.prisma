@@ -1,0 +1,241 @@
+// Backoffice "zema studios" — modelo de dados (v1)
+// Reconstrução do HTML single-file para Postgres/Neon.
+// Convenções espelhadas do Encore: snake_case via @map, UUID ids, @db.Date.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Estados core (state machines) ───────────────────────────────
+enum LeadStage {
+  contacto_inicial // "Contacto inicial"
+  proposta_enviada // "Proposta enviada"
+  em_negociacao    // "Em negociação"
+  aguarda_decisao  // "Aguarda decisão"
+}
+
+enum FinState {
+  em_producao // "Em produção"
+  entregue    // "Entregue"
+  faturado    // "Faturado"
+  pago        // "Pago"
+}
+
+// ─── Utilizador (único; sem signup público) ──────────────────────
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  displayName  String   @map("display_name")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("user")
+}
+
+// ─── Clientes & contactos ────────────────────────────────────────
+model Cliente {
+  id        String   @id @default(uuid()) @db.Uuid
+  legacyId  String?  @unique @map("legacy_id") // id do JSON antigo (c1, _xxxx) para mapear relações na migração
+  empresa   String
+  nome      String
+  nif       String?
+  email     String?
+  tel       String?
+  notas     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  contactos Contacto[]
+  leads     Lead[]
+  projetos  Projeto[]
+
+  @@map("cliente")
+}
+
+model Contacto {
+  id        String  @id @default(uuid()) @db.Uuid
+  clienteId String  @map("cliente_id") @db.Uuid
+  nome      String
+  cargo     String?
+  email     String?
+  tel       String?
+
+  cliente Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId])
+  @@map("contacto")
+}
+
+// ─── Pipeline comercial (leads) ──────────────────────────────────
+model Lead {
+  id            String    @id @default(uuid()) @db.Uuid
+  titulo        String
+  clienteId     String?   @map("cliente_id") @db.Uuid
+  tipo          String?
+  eps           Int       @default(0)
+  valEp         Decimal?  @map("val_ep") @db.Decimal(10, 2)
+  camera        String?
+  formato       String?
+  duracao       String?
+  valor         Decimal   @default(0) @db.Decimal(10, 2)
+  estado        LeadStage @default(contacto_inicial)
+  notas         String?
+  internacional Boolean   @default(false)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  cliente Cliente? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+
+  @@index([clienteId])
+  @@index([estado])
+  @@map("lead")
+}
+
+// ─── Produção (projetos) ─────────────────────────────────────────
+model Projeto {
+  id            String    @id @default(uuid()) @db.Uuid
+  legacyId      String?   @unique @map("legacy_id")
+  titulo        String
+  clienteId     String?   @map("cliente_id") @db.Uuid
+  tipo          String?
+  dp            String? // diretor de fotografia
+  camera        String?
+  formato       String?
+  duracao       String?
+  eps           Int       @default(0)
+  valEp         Decimal?  @map("val_ep") @db.Decimal(10, 2) // valor por episódio (opcional; valor = total)
+  recepcao      DateTime? @db.Date
+  prazo         DateTime? @db.Date
+  fase          Int       @default(0) // 0..4 — ver PROD_PHASES em src/lib/domain.ts
+  valor         Decimal   @default(0) @db.Decimal(10, 2)
+  notas         String?
+  internacional Boolean   @default(false)
+  color         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  cliente   Cliente?          @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  episodios EpisodeSchedule[]
+  sessoes   Sessao[]
+  history   ProjetoHistory[]
+  propostas Proposta[]
+  recibos   Recibo[]
+
+  @@index([clienteId])
+  @@index([fase])
+  @@map("projeto")
+}
+
+// Calendário de episódios de um projeto (rec/entrega previstos vs reais).
+model EpisodeSchedule {
+  id            String    @id @default(uuid()) @db.Uuid
+  projetoId     String    @map("projeto_id") @db.Uuid
+  idx           Int // posição do episódio (0-based) no projeto
+  rec           DateTime? @db.Date // material previsto
+  entrega       DateTime? @db.Date // entrega prevista
+  fase          Int       @default(0)
+  recReal       DateTime? @map("rec_real") @db.Date
+  entregaReal   DateTime? @map("entrega_real") @db.Date
+  pontualidade  String? // "no prazo" | "atraso Nd"
+
+  projeto Projeto @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+
+  @@unique([projetoId, idx])
+  @@index([projetoId])
+  @@map("episode_schedule")
+}
+
+model Sessao {
+  id        String   @id @default(uuid()) @db.Uuid
+  projetoId String   @map("projeto_id") @db.Uuid
+  data      DateTime @db.Date
+  dur       String?
+  notas     String?
+
+  projeto Projeto @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+
+  @@index([projetoId])
+  @@map("sessao")
+}
+
+// Histórico por projeto. tsRaw preserva o label original ("04/06 17h21");
+// ts é a melhor estimativa de timestamp real (assume ano corrente na migração).
+model ProjetoHistory {
+  id        String   @id @default(uuid()) @db.Uuid
+  projetoId String   @map("projeto_id") @db.Uuid
+  ts        DateTime
+  tsRaw     String   @map("ts_raw")
+  action    String
+  detail    String?
+
+  projeto Projeto @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+
+  @@index([projetoId])
+  @@map("projeto_history")
+}
+
+// ─── Financeiro ──────────────────────────────────────────────────
+model Proposta {
+  id            String   @id @default(uuid()) @db.Uuid
+  projetoId     String   @map("projeto_id") @db.Uuid
+  valor         Decimal  @default(0) @db.Decimal(10, 2)
+  estado        FinState @default(em_producao)
+  notas         String?
+  internacional Boolean  @default(false)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  projeto Projeto @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+
+  @@index([projetoId])
+  @@map("proposta")
+}
+
+model Recibo {
+  id            String   @id @default(uuid()) @db.Uuid
+  projetoId     String   @map("projeto_id") @db.Uuid
+  valor         Decimal  @default(0) @db.Decimal(10, 2)
+  data          DateTime @db.Date
+  notas         String?
+  internacional Boolean  @default(false)
+  pago          Boolean  @default(false)
+  taxaIRS       Decimal  @default(0.23) @map("taxa_irs") @db.Decimal(4, 3)
+  taxaIVA       Decimal? @default(0.23) @map("taxa_iva") @db.Decimal(4, 3)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  projeto Projeto @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+
+  @@index([projetoId])
+  @@index([data])
+  @@map("recibo")
+}
+
+// Estado de pagamento de IVA por trimestre.
+model IvaState {
+  id      String @id @default(uuid()) @db.Uuid
+  year    Int
+  quarter Int // 1..4
+  state   String // "pago" | "pendente"
+
+  @@unique([year, quarter])
+  @@map("iva_state")
+}
+
+// Feed de atividade. O label de tempo antigo era impreciso ("Agora, 12h32");
+// a migração sintetiza createdAt pela ordem do array; daqui para a frente é real.
+model Activity {
+  id        String   @id @default(uuid()) @db.Uuid
+  icon      String?
+  type      String?
+  text      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("activity")
+}

@@ -1,0 +1,118 @@
+.facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 22px;
+}
+.fact {
+  background: var(--white);
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.factK {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.factV {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 22px;
+  align-items: start;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.section {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.epSummary {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.epGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+  gap: 10px;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sideHead {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.empty {
+  padding: 16px 14px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text-primary);
+}
+.row:last-child {
+  border-bottom: none;
+}
+
+.histRow {
+  display: flex;
+  gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.histRow:last-child {
+  border-bottom: none;
+}
+.histTs {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  padding-top: 1px;
+  min-width: 64px;
+}
+.histAction {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.histDetail {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}

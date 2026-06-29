@@ -1,0 +1,66 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/db";
+import { Page } from "@/components/Page";
+import { LeadForm } from "@/components/LeadForm";
+import { updateLead, deleteLead, promoteLead } from "../../actions";
+
+export const dynamic = "force-dynamic";
+
+export default async function EditarLeadPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const [l, clientes] = await Promise.all([
+    prisma.lead.findUnique({ where: { id } }),
+    prisma.cliente.findMany({ select: { id: true, nome: true }, orderBy: { nome: "asc" } }),
+  ]);
+  if (!l) notFound();
+
+  const update = updateLead.bind(null, id);
+  const del = deleteLead.bind(null, id);
+  const promote = promoteLead.bind(null, id);
+
+  return (
+    <Page
+      title="Editar lead"
+      sub={l.titulo}
+      actions={
+        <div style={{ display: "flex", gap: 8 }}>
+          <form action={promote}>
+            <button type="submit" className="btn btn-primary btn-sm">
+              <i className="ti ti-arrow-up-right" /> Promover a produção
+            </button>
+          </form>
+          <Link href="/comercial" className="btn btn-ghost btn-sm">
+            <i className="ti ti-arrow-left" /> Voltar
+          </Link>
+        </div>
+      }
+    >
+      <LeadForm
+        action={update}
+        clientes={clientes}
+        submitLabel="Guardar alterações"
+        initial={{
+          titulo: l.titulo,
+          clienteId: l.clienteId,
+          tipo: l.tipo,
+          formato: l.formato,
+          camera: l.camera,
+          duracao: l.duracao,
+          eps: l.eps,
+          valEp: l.valEp == null ? null : Number(l.valEp),
+          valor: Number(l.valor),
+          estado: l.estado,
+          internacional: l.internacional,
+          notas: l.notas,
+        }}
+      />
+
+      <form action={del} style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid var(--border)" }}>
+        <button type="submit" className="btn btn-ghost btn-sm" style={{ color: "var(--red)" }}>
+          <i className="ti ti-trash" /> Apagar lead
+        </button>
+      </form>
+    </Page>
+  );
+}

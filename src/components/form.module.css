@@ -1,0 +1,154 @@
+.form {
+  max-width: 720px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+.full {
+  grid-column: 1 / -1;
+}
+
+.grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.grid label > span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.grid input,
+.grid select,
+.grid textarea {
+  font-family: inherit;
+  font-size: 13.5px;
+  padding: 9px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--text-primary);
+  color-scheme: light dark;
+}
+.grid input:focus,
+.grid select:focus,
+.grid textarea:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+.grid textarea {
+  resize: vertical;
+}
+.color {
+  height: 38px;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.valueHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.valueHead > span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--cream-dark);
+  border-radius: 7px;
+  padding: 2px;
+}
+.toggle button {
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 5px;
+  color: var(--text-muted);
+}
+.toggleActive {
+  background: var(--navy) !important;
+  color: #fff !important;
+}
+.perEpRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.perEpRow input {
+  width: 160px;
+}
+.times {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.total {
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.check {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px !important;
+  padding: 11px 13px;
+  background: var(--green-bg);
+  border-radius: 8px;
+}
+.check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--green-fg);
+}
+.check > span {
+  font-size: 13px;
+  color: var(--green-fg);
+  font-weight: 500;
+}
+
+.actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.contactInput {
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 7px 9px;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  background: var(--white);
+  color: var(--text-primary);
+  min-width: 0;
+}
+.contactInput:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+.contactRemove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 15px;
+  padding: 4px;
+  display: flex;
+  border-radius: 5px;
+}
+.contactRemove:hover {
+  color: var(--red);
+  background: var(--red-bg);
+}
