@@ -70,6 +70,29 @@ export default async function DashboardPage() {
   urgencias.sort((a, b) => a.dias - b.dias);
   const topUrg = urgencias.slice(0, 7);
 
+  // Movimentos recentes: últimas receções (↓) e entregas (↑) já concretizadas.
+  type Mov = { id: string; titulo: string; cliente: string; kind: "rec" | "entrega"; label: string; date: Date };
+  const movimentos: Mov[] = [];
+  const hojeUTC = Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate());
+  const jaAconteceu = (d: Date) =>
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) <= hojeUTC;
+  for (const p of projetos) {
+    const cliente = p.cliente?.nome ?? "—";
+    if (p.episodios.length > 0) {
+      for (const e of p.episodios) {
+        if (e.recReal) movimentos.push({ id: p.id, titulo: p.titulo, cliente, kind: "rec", label: `Ep. ${e.idx + 1} recebido`, date: e.recReal });
+        if (e.entregaReal) movimentos.push({ id: p.id, titulo: p.titulo, cliente, kind: "entrega", label: `Ep. ${e.idx + 1} entregue`, date: e.entregaReal });
+      }
+    } else {
+      if (p.recepcao) movimentos.push({ id: p.id, titulo: p.titulo, cliente, kind: "rec", label: "Material recebido", date: p.recepcao });
+      if (p.entregaReal) movimentos.push({ id: p.id, titulo: p.titulo, cliente, kind: "entrega", label: "Entregue", date: p.entregaReal });
+    }
+  }
+  const recentes = movimentos
+    .filter((m) => jaAconteceu(m.date))
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, 7);
+
   const stats = [
     { label: "Leads activos", value: String(leads.length), sub: `${fmtMoney(leadVal)} potencial`, color: "#2563EB" },
     { label: "Em produção", value: String(emProducao), sub: `de ${projetos.length} total`, color: "#D97706" },
@@ -90,26 +113,58 @@ export default async function DashboardPage() {
       </div>
 
       <div className={styles.grid2}>
-        <div className="card">
-          <div className={styles.cardHead}>
-            <span className={styles.cardTitle}>Próximos prazos</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="card">
+            <div className={styles.cardHead}>
+              <span className={styles.cardTitle}>Próximos prazos</span>
+            </div>
+            {topUrg.length === 0 && <div className={styles.empty}>Sem prazos pendentes 🎉</div>}
+            {topUrg.map((u, i) => {
+              const tone = u.dias < 0 ? "badge-red" : u.dias <= 3 ? "badge-amber" : "badge-blue";
+              const txt = u.dias < 0 ? `${Math.abs(u.dias)}d atraso` : u.dias === 0 ? "hoje" : `${u.dias}d`;
+              return (
+                <Link href={`/producao/${u.id}`} className={styles.urgRow} key={i}>
+                  <div style={{ minWidth: 0 }}>
+                    <div className={styles.urgTitle}>{u.titulo}</div>
+                    <div className={styles.urgSub}>
+                      {u.cliente} · {u.label} · {fmtShort(u.date)}
+                    </div>
+                  </div>
+                  <span className={`badge ${tone}`}>{txt}</span>
+                </Link>
+              );
+            })}
           </div>
-          {topUrg.length === 0 && <div className={styles.empty}>Sem prazos pendentes 🎉</div>}
-          {topUrg.map((u, i) => {
-            const tone = u.dias < 0 ? "badge-red" : u.dias <= 3 ? "badge-amber" : "badge-blue";
-            const txt = u.dias < 0 ? `${Math.abs(u.dias)}d atraso` : u.dias === 0 ? "hoje" : `${u.dias}d`;
-            return (
-              <Link href={`/producao/${u.id}`} className={styles.urgRow} key={i}>
-                <div style={{ minWidth: 0 }}>
-                  <div className={styles.urgTitle}>{u.titulo}</div>
-                  <div className={styles.urgSub}>
-                    {u.cliente} · {u.label} · {fmtShort(u.date)}
+
+          <div className="card">
+            <div className={styles.cardHead}>
+              <span className={styles.cardTitle}>Recentes</span>
+              <span className={styles.empty} style={{ padding: 0, fontSize: 11 }}>receções ↓ · entregas ↑</span>
+            </div>
+            {recentes.length === 0 && <div className={styles.empty}>Sem movimentos recentes</div>}
+            {recentes.map((m, i) => (
+              <Link href={`/producao/${m.id}`} className={styles.urgRow} key={i}>
+                <div style={{ minWidth: 0, display: "flex", alignItems: "center", gap: 9 }}>
+                  <span
+                    aria-hidden
+                    style={{
+                      color: m.kind === "entrega" ? "#059669" : "#2563EB",
+                      fontWeight: 800,
+                      fontSize: 15,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {m.kind === "entrega" ? "↑" : "↓"}
+                  </span>
+                  <div style={{ minWidth: 0 }}>
+                    <div className={styles.urgTitle}>{m.titulo}</div>
+                    <div className={styles.urgSub}>{m.cliente} · {m.label}</div>
                   </div>
                 </div>
-                <span className={`badge ${tone}`}>{txt}</span>
+                <span className={styles.urgSub} style={{ whiteSpace: "nowrap" }}>{fmtShort(m.date)}</span>
               </Link>
-            );
-          })}
+            ))}
+          </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
