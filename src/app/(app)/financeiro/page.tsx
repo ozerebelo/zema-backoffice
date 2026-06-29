@@ -77,6 +77,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
   const TABS = [
     { key: "projetos", label: "Projetos" },
     { key: "recibos", label: "Recibos" },
+    { key: "cobrar", label: "Por cobrar" },
     { key: "iva", label: "Trimestres IVA" },
     { key: "anual", label: "Resumo anual" },
   ];
@@ -129,6 +130,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 
       {tab === "projetos" && <ProjetosTab propostas={propostas} recibos={recibos} sub={sub} hrefSub={(s: string) => href({ sub: s })} />}
       {tab === "recibos" && <RecibosTab recibos={recibos} ano={ano} ivaStates={ivaStates} />}
+      {tab === "cobrar" && <CobrarTab recibos={recibos} />}
       {tab === "iva" && <IvaTab recibos={recibos} ano={ano} ivaStates={ivaStates} />}
       {tab === "anual" && <AnualTab recibos={recibos} ano={ano} />}
     </Page>
@@ -251,6 +253,106 @@ function RecibosTab({ recibos, ano, ivaStates }: any) {
         );
       })}
     </div>
+  );
+}
+
+/* ── Por cobrar (aging de recibos não pagos) ─────────────────── */
+function daysOutstanding(d: Date): number {
+  const t = new Date();
+  const a = Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate());
+  const b = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  return Math.round((a - b) / 86_400_000);
+}
+function agingColor(dias: number): string {
+  return dias > 90 ? "#991B1B" : dias > 60 ? "#DC4A36" : dias > 30 ? "#D97706" : "#059669";
+}
+
+function CobrarTab({ recibos }: any) {
+  // Todos os recibos por receber (independente do ano — é o que interessa em tesouraria).
+  const pend = recibos
+    .filter((r: any) => !r.pago)
+    .map((r: any) => ({ r, dias: daysOutstanding(r.data), imp: reciboImpostos(r) }))
+    .sort((a: any, b: any) => b.dias - a.dias); // mais antigos primeiro
+
+  if (pend.length === 0) {
+    return <div className={styles.empty}>Tudo cobrado 🎉 — sem recibos por receber.</div>;
+  }
+
+  const totalBruto = pend.reduce((s: number, x: any) => s + x.imp.bruto, 0);
+  const totalLiq = pend.reduce((s: number, x: any) => s + x.imp.liquido, 0);
+
+  const BUCKETS = [
+    { label: "≤ 30 dias", color: "#059669", test: (d: number) => d <= 30 },
+    { label: "31–60 dias", color: "#D97706", test: (d: number) => d > 30 && d <= 60 },
+    { label: "61–90 dias", color: "#DC4A36", test: (d: number) => d > 60 && d <= 90 },
+    { label: "+ 90 dias", color: "#991B1B", test: (d: number) => d > 90 },
+  ];
+
+  return (
+    <>
+      <div className={styles.statsGrid}>
+        <div className="card" style={{ padding: "13px 15px", borderTop: "3px solid #DC4A36" }}>
+          <div className={styles.statLabel}>Total por cobrar</div>
+          <div className={styles.statValue} style={{ color: "#DC4A36" }}>{fmtMoney(round2(totalBruto))}</div>
+          <div className={styles.statSub}>{pend.length} recibo(s) · líq. {fmtMoney(round2(totalLiq))}</div>
+        </div>
+        {BUCKETS.map((b) => {
+          const items = pend.filter((x: any) => b.test(x.dias));
+          const total = items.reduce((s: number, x: any) => s + x.imp.bruto, 0);
+          return (
+            <div className="card" key={b.label} style={{ padding: "13px 15px", borderTop: `3px solid ${b.color}` }}>
+              <div className={styles.statLabel}>{b.label}</div>
+              <div className={styles.statValue} style={{ color: b.color }}>{fmtMoney(round2(total))}</div>
+              <div className={styles.statSub}>{items.length} recibo(s)</div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="card">
+        {pend.map(({ r, dias, imp }: any) => {
+          const tone = agingColor(dias);
+          return (
+            <div className={styles.recRow} key={r.id}>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: tone,
+                  border: `1px solid ${tone}55`,
+                  background: `${tone}12`,
+                  borderRadius: 20,
+                  padding: "3px 9px",
+                  whiteSpace: "nowrap",
+                  minWidth: 46,
+                  textAlign: "center",
+                }}
+                title={`Emitido há ${dias} dia(s)`}
+              >
+                {dias <= 0 ? "hoje" : `${dias}d`}
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className={styles.projTitle}>
+                  {r.projeto?.titulo ?? "—"}
+                  {r.notas ? <span className={styles.recNota}> — {r.notas}</span> : null}
+                  {r.internacional ? <span className={styles.intTag}>INT</span> : null}
+                </div>
+                <div className={styles.projCli}>{r.projeto?.cliente?.nome ?? "—"} · emitido {fmtShort(r.data)}</div>
+                <div className={styles.projTax}>
+                  Bruto c/IVA <b style={{ color: "var(--ink)" }}>{fmtMoney(imp.bruto)}</b> · Líq <b style={{ color: "var(--green-fg)" }}>{fmtMoney(imp.liquido)}</b>
+                </div>
+              </div>
+              <strong className={styles.projVal}>{fmtMoney(Number(r.valor))}</strong>
+              <form action={toggleReciboPago.bind(null, r.id)}>
+                <button type="submit" className={styles.iconBtn} title="Marcar recebido" style={{ color: "var(--text-muted)" }}>
+                  <i className="ti ti-circle" />
+                </button>
+              </form>
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
