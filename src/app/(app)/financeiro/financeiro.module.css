@@ -53,6 +53,10 @@
 .r {
   text-align: right;
 }
+/* o cabeçalho precisa de + especificidade que `.table thead th` (que força left) */
+.table thead th.r {
+  text-align: right;
+}
 .rowActive {
   background: var(--cream);
 }
