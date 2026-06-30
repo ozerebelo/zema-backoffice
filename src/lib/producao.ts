@@ -47,7 +47,8 @@ export function calcProjStatus(p: ProjLite) {
   return { label: PNAMES[active], color: PCOLORS[active], fase: active, counts };
 }
 
-/** Data da próxima entrega pendente, ou null. */
+/** Data da próxima entrega PENDENTE, ou null. Trabalho já entregue (fase 4 —
+ *  em revisão ou aprovado) não conta: o prazo inicial foi cumprido. */
 export function getNextDeadline(p: ProjLite): Date | null {
   const eps = p.episodios ?? [];
   if (p.eps > 1) {
@@ -57,8 +58,11 @@ export function getNextDeadline(p: ProjLite): Date | null {
     return pend[0];
   }
   if (p.eps === 1) {
-    return eps[0]?.entrega ?? p.prazo ?? null;
+    const e = eps[0];
+    if (e && (e.fase ?? 0) >= 4) return null; // episódio já entregue
+    return e?.entrega ?? p.prazo ?? null;
   }
+  if (p.fase >= 4) return null; // projeto sem episódios já entregue
   return p.prazo ?? null;
 }
 
