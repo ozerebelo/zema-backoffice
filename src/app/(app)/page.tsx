@@ -4,8 +4,8 @@ import { Page } from "@/components/Page";
 import { quarterLabel } from "@/lib/tax";
 import { yearSummary, roundSummary } from "@/lib/finance";
 import { fmtMoney, fmtShort } from "@/lib/dates";
-import { faseLabel } from "@/lib/domain";
-import { isAprovado } from "@/lib/producao";
+import { faseLabel, LEAD_STAGE_LABEL } from "@/lib/domain";
+import { isAprovado, projReview } from "@/lib/producao";
 import styles from "./dashboard.module.css";
 
 export const dynamic = "force-dynamic";
@@ -81,8 +81,8 @@ export default async function DashboardPage() {
       });
     }
   }
-  urgencias.sort((a, b) => a.dias - b.dias);
-  const topUrg = urgencias.slice(0, 7);
+  // Próximos prazos = só o que vem aí (futuro); os atrasados vão para "A precisar de atenção".
+  const topUrg = urgencias.filter((u) => u.dias >= 0).sort((a, b) => a.dias - b.dias).slice(0, 7);
 
   // Movimentos recentes: últimas receções (↓) e entregas (↑) já concretizadas.
   type Mov = { id: string; titulo: string; cliente: string; kind: "rec" | "entrega"; label: string; date: Date };
@@ -107,6 +107,51 @@ export default async function DashboardPage() {
     .sort((a, b) => b.date.getTime() - a.date.getTime())
     .slice(0, 7);
 
+  // ── A precisar de atenção: o que perseguir hoje ──────────────────
+  const projTitulo = new Map(projetos.map((p) => [p.id, p.titulo]));
+  type Att = { icon: string; color: string; title: string; sub: string; badge: string; href: string; sort: number };
+  const att: Att[] = [];
+
+  for (const p of projetos) {
+    if (isAprovado(p)) continue;
+    const cli = p.cliente?.nome ?? "—";
+    // 1) prazos passados sem entrega
+    for (const e of p.episodios) {
+      if (e.entrega && !e.entregaReal && e.fase < 4) {
+        const dias = daysUntil(e.entrega);
+        if (dias < 0) att.push({ icon: "ti-alert-triangle", color: "#DC4A36", title: p.titulo, sub: `${cli} · Ep. ${e.idx + 1} — prazo passado`, badge: `${-dias}d atraso`, href: `/producao/${p.id}`, sort: 2000 - dias });
+      }
+    }
+    if (p.episodios.length === 0 && p.prazo && !p.entregaReal && p.fase < 4) {
+      const dias = daysUntil(p.prazo);
+      if (dias < 0) att.push({ icon: "ti-alert-triangle", color: "#DC4A36", title: p.titulo, sub: `${cli} · prazo passado`, badge: `${-dias}d atraso`, href: `/producao/${p.id}`, sort: 2000 - dias });
+    }
+    // 2) à espera de feedback há muito (>7d desde a entrega)
+    if (projReview(p).status === "aguarda_feedback") {
+      const since = p.episodios.length
+        ? p.episodios.filter((e) => e.reviewStatus === "aguarda_feedback" && e.entregaReal).map((e) => e.entregaReal!).sort((a, b) => b.getTime() - a.getTime())[0] ?? null
+        : p.entregaReal;
+      const dias = since ? -daysUntil(since) : 0;
+      if (dias > 7) att.push({ icon: "ti-message-dots", color: "#7C3AED", title: p.titulo, sub: `${cli} · à espera de feedback`, badge: `há ${dias}d`, href: `/producao/${p.id}`, sort: 800 + dias });
+    }
+  }
+
+  // 3) recibos por receber atrasados (>30d desde a emissão)
+  for (const r of recibos) {
+    if (r.pago) continue;
+    const dias = -daysUntil(r.data);
+    if (dias > 30) att.push({ icon: "ti-cash", color: "#D97706", title: `Recibo de ${fmtMoney(Number(r.valor))}`, sub: `${projTitulo.get(r.projetoId) ?? "—"} · por receber`, badge: `há ${dias}d`, href: "/financeiro?tab=cobrar", sort: 1000 + dias });
+  }
+
+  // 4) leads parados (>14d sem mexer)
+  for (const l of leads) {
+    const dias = -daysUntil(l.updatedAt);
+    if (dias > 14) att.push({ icon: "ti-target-arrow", color: "#2563EB", title: l.titulo, sub: `Lead · ${LEAD_STAGE_LABEL[l.estado]}`, badge: `parado ${dias}d`, href: "/comercial", sort: 400 + dias });
+  }
+
+  att.sort((a, b) => b.sort - a.sort);
+  const topAtt = att.slice(0, 7);
+
   const stats = [
     { label: "Leads activos", value: String(leads.length), sub: `${fmtMoney(leadVal)} potencial`, color: "#2563EB" },
     { label: "Em produção", value: String(emProducao), sub: `de ${projetos.length} total`, color: "#D97706" },
@@ -116,6 +161,45 @@ export default async function DashboardPage() {
 
   return (
     <Page title="Dashboard" sub={`${ano}`}>
+      {topAtt.length > 0 ? (
+        <div className="card" style={{ marginBottom: 18, borderLeft: "3px solid #DC4A36" }}>
+          <div className={styles.cardHead}>
+            <span className={styles.cardTitle}>A precisar de atenção</span>
+            <span className={styles.statSub} style={{ margin: 0 }}>{att.length}</span>
+          </div>
+          {topAtt.map((a, i) => (
+            <Link href={a.href} className={styles.urgRow} key={i}>
+              <span style={{ color: a.color, fontSize: 16, display: "flex", flexShrink: 0 }}>
+                <i className={`ti ${a.icon}`} />
+              </span>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div className={styles.urgTitle}>{a.title}</div>
+                <div className={styles.urgSub}>{a.sub}</div>
+              </div>
+              <span
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  color: a.color,
+                  border: `1px solid ${a.color}55`,
+                  background: `${a.color}14`,
+                  borderRadius: 20,
+                  padding: "2px 8px",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                }}
+              >
+                {a.badge}
+              </span>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div style={{ marginBottom: 16, fontSize: 12.5, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+          <i className="ti ti-circle-check" style={{ color: "var(--green-fg)" }} /> Tudo em dia — nada a perseguir.
+        </div>
+      )}
+
       <div className={styles.statsGrid}>
         {stats.map((s) => (
           <div className="card" key={s.label} style={{ padding: "14px 16px", borderTop: `3px solid ${s.color}` }}>
