@@ -114,6 +114,8 @@ model Projeto {
   prazo         DateTime? @db.Date
   entregaReal   DateTime? @map("entrega_real") @db.Date // data real de entrega do projeto (sem episódios)
   fase          Int       @default(0) // 0..4 — ver PROD_PHASES em src/lib/domain.ts
+  reviewStatus  String?   @map("review_status") // null | aguarda_feedback | em_revisao | aprovado (projetos s/ episódios)
+  reviewRound   Int       @default(1) @map("review_round") // ronda de revisão (v1, v2…)
   valor         Decimal   @default(0) @db.Decimal(10, 2)
   notas         String?
   internacional Boolean   @default(false)
@@ -144,6 +146,8 @@ model EpisodeSchedule {
   recReal       DateTime? @map("rec_real") @db.Date
   entregaReal   DateTime? @map("entrega_real") @db.Date
   pontualidade  String? // "no prazo" | "atraso Nd"
+  reviewStatus  String?   @map("review_status") // null | aguarda_feedback | em_revisao | aprovado
+  reviewRound   Int       @default(1) @map("review_round") // ronda de revisão (v1, v2…)
 
   projeto Projeto @relation(fields: [projetoId], references: [id], onDelete: Cascade)
 

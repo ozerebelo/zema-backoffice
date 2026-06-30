@@ -6,6 +6,35 @@ export const PNAMES = ["Conform", "Sess.1", "Sess.2", "Delivers", "Entregue"];
 export type EpLite = { fase: number; entrega: Date | null; entregaReal: Date | null };
 export type ProjLite = { fase: number; eps: number; prazo: Date | null; episodios: EpLite[] };
 
+// ─── Ciclo de revisão: estado do projeto derivado dos episódios ──
+export type ReviewLite = { reviewStatus: string | null; reviewRound: number };
+export type ProjReviewLite = {
+  eps: number;
+  reviewStatus: string | null;
+  reviewRound: number;
+  episodios: ReviewLite[];
+};
+
+/** Estado de revisão do projeto: nos projetos com episódios é derivado
+ *  (aprovado só quando TODOS o estão); nos restantes é o do próprio projeto. */
+export function projReview(p: ProjReviewLite): { status: string | null; round: number } {
+  const eps = p.episodios ?? [];
+  if (p.eps && eps.length) {
+    const round = Math.max(1, ...eps.map((e) => e.reviewRound ?? 1));
+    const st = eps.map((e) => e.reviewStatus);
+    if (st.every((s) => s === "aprovado")) return { status: "aprovado", round };
+    if (st.some((s) => s === "em_revisao")) return { status: "em_revisao", round };
+    if (st.some((s) => s === "aguarda_feedback")) return { status: "aguarda_feedback", round };
+    return { status: null, round };
+  }
+  return { status: p.reviewStatus, round: p.reviewRound ?? 1 };
+}
+
+/** Um projeto está "fechado/arquivado" apenas quando aprovado. */
+export function isAprovado(p: ProjReviewLite): boolean {
+  return projReview(p).status === "aprovado";
+}
+
 export function calcProjStatus(p: ProjLite) {
   const eps = p.episodios ?? [];
   if (!eps.length || !p.eps) {

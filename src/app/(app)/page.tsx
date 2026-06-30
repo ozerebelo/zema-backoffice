@@ -5,6 +5,7 @@ import { quarterLabel } from "@/lib/tax";
 import { yearSummary, roundSummary } from "@/lib/finance";
 import { fmtMoney, fmtShort } from "@/lib/dates";
 import { faseLabel } from "@/lib/domain";
+import { isAprovado } from "@/lib/producao";
 import styles from "./dashboard.module.css";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ export default async function DashboardPage() {
   const ano = new Date().getFullYear();
   const fin = roundSummary(yearSummary(recibos, ano));
 
-  const emProducao = projetos.filter((p) => p.fase < 4).length;
+  const emProducao = projetos.filter((p) => !isAprovado(p)).length;
   const ivaPendentes = ivaStates.filter((i) => i.state !== "pago");
 
   // Header (como o original): Leads · Produção · Faturado · Por faturar

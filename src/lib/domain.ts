@@ -35,6 +35,21 @@ export function faseLabel(fase: number): string {
   return PROD_PHASES[fase] ?? PROD_PHASES[0];
 }
 
+// ─── Ciclo de revisão (após entrega) ─────────────────────────────
+export type ReviewStatus = "aguarda_feedback" | "em_revisao" | "aprovado";
+
+export const REVIEW: Record<ReviewStatus, { label: string; color: string }> = {
+  aguarda_feedback: { label: "Aguarda feedback", color: "#D97706" },
+  em_revisao: { label: "Em revisão", color: "#7C3AED" },
+  aprovado: { label: "Aprovado", color: "#059669" },
+};
+
+export function reviewLabel(status: string | null, round?: number): string | null {
+  if (!status || !(status in REVIEW)) return null;
+  const base = REVIEW[status as ReviewStatus].label;
+  return round && round > 1 && status !== "aprovado" ? `${base} · v${round}` : base;
+}
+
 // ─── Financeiro (estado da proposta) ─────────────────────────────
 export const FIN_STATES: { value: FinState; label: string; badge: string }[] = [
   { value: "em_producao", label: "Em produção", badge: "badge-blue" },

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { Page } from "@/components/Page";
 import { ProjetoCard } from "@/components/ProjetoCard";
 import { ProducaoFilters } from "@/components/ProducaoFilters";
-import { calcProjStatus } from "@/lib/producao";
+import { calcProjStatus, projReview, isAprovado } from "@/lib/producao";
 import { fmtMoney } from "@/lib/dates";
 import styles from "@/components/projeto-card.module.css";
 
@@ -69,8 +69,9 @@ export default async function ProducaoPage({ searchParams }: { searchParams: Pro
     }
   };
 
-  const active = projetos.filter((p) => p.fase < 4 && matches(p)).sort(sortFn);
-  const done = projetos.filter((p) => p.fase >= 4 && matchesYear(p));
+  // "Em curso" = ainda não aprovado (inclui entregues em revisão); arquivo = aprovado.
+  const active = projetos.filter((p) => !isAprovado(p) && matches(p)).sort(sortFn);
+  const done = projetos.filter((p) => isAprovado(p) && matchesYear(p));
 
   // agrupar entregues por ano → cliente
   const byYear = new Map<string, Map<string, typeof done>>();
@@ -113,6 +114,7 @@ export default async function ProducaoPage({ searchParams }: { searchParams: Pro
               prazo: p.prazo, dp: p.dp, cliente: p.cliente?.nome ?? null,
               episodios: p.episodios.map((e) => ({ fase: e.fase, entrega: e.entrega, entregaReal: e.entregaReal })),
               faturado: faturadoBy.get(p.id) ?? 0,
+              review: projReview(p),
             }}
           />
         ))}

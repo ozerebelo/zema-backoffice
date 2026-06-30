@@ -100,6 +100,8 @@ export default async function ProjetoDetailPage({
                       entregaReal: toDateInput(e.entregaReal),
                       fase: e.fase,
                       pontualidade: e.pontualidade,
+                      reviewStatus: e.reviewStatus,
+                      reviewRound: e.reviewRound,
                     }}
                   />
                 ))}
@@ -117,6 +119,8 @@ export default async function ProjetoDetailPage({
                   fase={p.fase}
                   entregaReal={toDateInput(p.entregaReal)}
                   prazoLabel={p.prazo ? fmtShort(p.prazo) : null}
+                  reviewStatus={p.reviewStatus}
+                  reviewRound={p.reviewRound}
                 />
               </div>
               <form action={addEpisode.bind(null, p.id)} style={{ marginBottom: 22 }}>

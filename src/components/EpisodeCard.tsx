@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { setEpisodeDate, setEpisodeFase } from "@/app/(app)/producao/[id]/actions";
+import { setEpisodeDate, setEpisodeFase, setEpisodeReview } from "@/app/(app)/producao/[id]/actions";
 import { removeEpisode } from "@/app/(app)/producao/projeto-actions";
 import { PROD_PHASES_SHORT } from "@/lib/domain";
+import { ReviewControl } from "./ReviewControl";
 import styles from "./episode.module.css";
 
 type Ep = {
@@ -16,6 +17,8 @@ type Ep = {
   entregaReal: string | null;
   fase: number;
   pontualidade: string | null;
+  reviewStatus: string | null;
+  reviewRound: number;
 };
 
 const SHORT = ["CF", "S1", "S2", "DL", "✓"];
@@ -46,6 +49,14 @@ export function EpisodeCard({ ep }: { ep: Ep }) {
     setBusy(true);
     start(async () => {
       await removeEpisode(ep.id);
+      router.refresh();
+      setBusy(false);
+    });
+  }
+  function review(a: "feedback" | "reentregar" | "aprovar" | "reabrir") {
+    setBusy(true);
+    start(async () => {
+      await setEpisodeReview(ep.id, a);
       router.refresh();
       setBusy(false);
     });
@@ -116,6 +127,13 @@ export function EpisodeCard({ ep }: { ep: Ep }) {
           </button>
         ))}
       </div>
+
+      <ReviewControl
+        status={ep.reviewStatus}
+        round={ep.reviewRound}
+        disabled={pending || busy}
+        onAction={review}
+      />
     </div>
   );
 }

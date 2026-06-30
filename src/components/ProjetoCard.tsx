@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { calcProjStatus, getNextDeadline, urgencyFromDeadline, PCOLORS, PSHORT } from "@/lib/producao";
 import { quickSetProjetoFase } from "@/app/(app)/producao/projeto-actions";
+import { REVIEW, reviewLabel, type ReviewStatus } from "@/lib/domain";
 import { fmtMoney } from "@/lib/dates";
 import styles from "./projeto-card.module.css";
 
@@ -16,6 +17,7 @@ type Proj = {
   cliente: string | null;
   episodios: Ep[];
   faturado: number;
+  review: { status: string | null; round: number };
 };
 
 export function ProjetoCard({ p }: { p: Proj }) {
@@ -38,7 +40,13 @@ export function ProjetoCard({ p }: { p: Proj }) {
 
       <div className={styles.head} style={{ marginTop: urg ? 10 : 0 }}>
         <div className={styles.title}>{p.titulo}</div>
-        <span className={styles.phase} style={{ background: status.color }}>{PSHORT[status.fase]}</span>
+        {p.review.status && p.review.status !== "aprovado" ? (
+          <span className={styles.phase} style={{ background: REVIEW[p.review.status as ReviewStatus].color }}>
+            {reviewLabel(p.review.status, p.review.round)}
+          </span>
+        ) : (
+          <span className={styles.phase} style={{ background: status.color }}>{PSHORT[status.fase]}</span>
+        )}
       </div>
       <div className={styles.cli}>
         {p.cliente ?? "—"}

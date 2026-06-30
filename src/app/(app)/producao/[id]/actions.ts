@@ -36,7 +36,10 @@ export async function setEpisodeDate(
 
   if (field === "entregaReal") {
     data.pontualidade = pontualidade(entrega, entregaReal);
-    if (date) data.fase = 4; // entregue
+    if (date) {
+      data.fase = 4; // entregue
+      if (!ep.reviewStatus) data.reviewStatus = "aguarda_feedback"; // arranca o ciclo de revisão (v1)
+    }
   } else if (field === "entrega") {
     data.pontualidade = pontualidade(entrega, entregaReal);
   }
@@ -61,11 +64,45 @@ export async function setEpisodeDate(
 export async function setEpisodeFase(episodeId: string, fase: number) {
   const ep = await prisma.episodeSchedule.findUnique({ where: { id: episodeId } });
   if (!ep) return;
-  await prisma.episodeSchedule.update({ where: { id: episodeId }, data: { fase } });
+  const data: { fase: number; reviewStatus?: string | null } = { fase };
+  if (fase === 4 && !ep.reviewStatus) data.reviewStatus = "aguarda_feedback"; // arranca revisão
+  else if (fase < 4 && ep.reviewStatus) data.reviewStatus = null; // sai do ciclo
+  await prisma.episodeSchedule.update({ where: { id: episodeId }, data });
   revalidatePaths(ep.projetoId);
 }
 
-async function logHistory(projetoId: string, action: string, detail: string) {
+/** Transições do ciclo de revisão de um episódio (após entrega). */
+export async function setEpisodeReview(
+  episodeId: string,
+  action: "feedback" | "reentregar" | "aprovar" | "reabrir"
+) {
+  const ep = await prisma.episodeSchedule.findUnique({ where: { id: episodeId } });
+  if (!ep) return;
+  const n = ep.idx + 1;
+  const data: Record<string, unknown> = {};
+
+  if (action === "feedback") {
+    data.reviewStatus = "em_revisao";
+    await logHistory(ep.projetoId, `Ep.${n} — feedback recebido`, `v${ep.reviewRound}`);
+  } else if (action === "reentregar") {
+    data.reviewStatus = "aguarda_feedback";
+    data.reviewRound = ep.reviewRound + 1;
+    data.fase = 4;
+    data.entregaReal = new Date();
+    await logHistory(ep.projetoId, `Ep.${n} reentregue`, `v${ep.reviewRound + 1}`);
+  } else if (action === "aprovar") {
+    data.reviewStatus = "aprovado";
+    await logHistory(ep.projetoId, `Ep.${n} aprovado`, "✓ Final");
+  } else if (action === "reabrir") {
+    data.reviewStatus = "em_revisao";
+    await logHistory(ep.projetoId, `Ep.${n} reaberto`);
+  }
+
+  await prisma.episodeSchedule.update({ where: { id: episodeId }, data });
+  revalidatePaths(ep.projetoId);
+}
+
+async function logHistory(projetoId: string, action: string, detail?: string) {
   const now = new Date();
   const tsRaw =
     String(now.getDate()).padStart(2, "0") +

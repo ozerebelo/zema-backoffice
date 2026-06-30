@@ -166,12 +166,14 @@ export async function quickSetProjetoFase(projetoId: string, fase: number) {
   const p = await prisma.projeto.findUnique({ where: { id: projetoId } });
   if (!p) return;
 
-  const data: { fase: number; entregaReal?: Date | null } = { fase };
+  const data: { fase: number; entregaReal?: Date | null; reviewStatus?: string | null } = { fase };
   if (fase === 4) {
     if (!p.entregaReal) data.entregaReal = new Date();
+    if (!p.reviewStatus) data.reviewStatus = "aguarda_feedback"; // arranca o ciclo de revisão
     if (p.fase !== 4) await logProjHistory(projetoId, "Projeto entregue");
   } else if (p.fase === 4) {
     data.entregaReal = null; // já não está entregue → solta a data
+    data.reviewStatus = null; // e sai do ciclo de revisão
   }
 
   await prisma.projeto.update({ where: { id: projetoId }, data });
@@ -189,12 +191,48 @@ export async function setProjetoEntregaReal(projetoId: string, value: string | n
   const date = parseDateOnly(value);
   await prisma.projeto.update({
     where: { id: projetoId },
-    data: { entregaReal: date, fase: date ? 4 : p.fase === 4 ? 3 : p.fase },
+    data: {
+      entregaReal: date,
+      fase: date ? 4 : p.fase === 4 ? 3 : p.fase,
+      reviewStatus: date ? (p.reviewStatus ?? "aguarda_feedback") : null,
+    },
   });
   if (date && p.fase !== 4) {
     await logProjHistory(projetoId, "Projeto entregue", value!);
   }
 
+  revalidatePath("/producao");
+  revalidatePath(`/producao/${projetoId}`);
+  revalidatePath("/");
+}
+
+/** Transições do ciclo de revisão de um projeto sem episódios. */
+export async function setProjetoReview(
+  projetoId: string,
+  action: "feedback" | "reentregar" | "aprovar" | "reabrir"
+) {
+  const p = await prisma.projeto.findUnique({ where: { id: projetoId } });
+  if (!p) return;
+  const data: Record<string, unknown> = {};
+
+  if (action === "feedback") {
+    data.reviewStatus = "em_revisao";
+    await logProjHistory(projetoId, "Feedback recebido", `v${p.reviewRound}`);
+  } else if (action === "reentregar") {
+    data.reviewStatus = "aguarda_feedback";
+    data.reviewRound = p.reviewRound + 1;
+    data.fase = 4;
+    data.entregaReal = new Date();
+    await logProjHistory(projetoId, "Projeto reentregue", `v${p.reviewRound + 1}`);
+  } else if (action === "aprovar") {
+    data.reviewStatus = "aprovado";
+    await logProjHistory(projetoId, "Projeto aprovado", "✓ Final");
+  } else if (action === "reabrir") {
+    data.reviewStatus = "em_revisao";
+    await logProjHistory(projetoId, "Projeto reaberto");
+  }
+
+  await prisma.projeto.update({ where: { id: projetoId }, data });
   revalidatePath("/producao");
   revalidatePath(`/producao/${projetoId}`);
   revalidatePath("/");

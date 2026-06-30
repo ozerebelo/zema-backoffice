@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import {
   quickSetProjetoFase,
   setProjetoEntregaReal,
+  setProjetoReview,
 } from "@/app/(app)/producao/projeto-actions";
 import { PROD_PHASES_SHORT, faseLabel } from "@/lib/domain";
+import { ReviewControl } from "./ReviewControl";
 import ep from "./episode.module.css";
 
 const SHORT = ["CF", "S1", "S2", "DL", "✓"];
@@ -18,16 +20,29 @@ export function ProjetoFase({
   fase,
   entregaReal,
   prazoLabel,
+  reviewStatus,
+  reviewRound,
 }: {
   projetoId: string;
   fase: number;
   entregaReal: string | null;
   prazoLabel: string | null;
+  reviewStatus: string | null;
+  reviewRound: number;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [busy, setBusy] = useState(false);
   const delivered = fase >= 4;
+
+  function review(a: "feedback" | "reentregar" | "aprovar" | "reabrir") {
+    setBusy(true);
+    start(async () => {
+      await setProjetoReview(projetoId, a);
+      router.refresh();
+      setBusy(false);
+    });
+  }
 
   function setFase(f: number) {
     setBusy(true);
@@ -91,6 +106,13 @@ export function ProjetoFase({
           </button>
         ))}
       </div>
+
+      <ReviewControl
+        status={reviewStatus}
+        round={reviewRound}
+        disabled={pending || busy}
+        onAction={review}
+      />
     </div>
   );
 }
