@@ -182,11 +182,11 @@ export default async function DashboardPage() {
               <strong style={{ color: "var(--ink)" }}>{fmtMoney(fin.liquido)}</strong>
             </div>
             <div className={styles.finRow}>
-              <span>Já cobrado</span>
+              <span>Já recebido</span>
               <strong style={{ color: "var(--green-fg)" }}>{fmtMoney(fin.cobrado)}</strong>
             </div>
             <div className={styles.finRow}>
-              <span>Por cobrar</span>
+              <span>Por receber</span>
               <strong style={{ color: "var(--red)" }}>{fmtMoney(fin.porCobrar)}</strong>
             </div>
             {ivaPendentes.length > 0 && (

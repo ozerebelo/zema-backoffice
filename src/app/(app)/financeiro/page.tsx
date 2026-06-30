@@ -77,7 +77,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
   const TABS = [
     { key: "projetos", label: "Projetos" },
     { key: "recibos", label: "Recibos" },
-    { key: "cobrar", label: "Por cobrar" },
+    { key: "cobrar", label: "Por receber" },
     { key: "iva", label: "Trimestres IVA" },
     { key: "anual", label: "Resumo anual" },
   ];
@@ -275,7 +275,7 @@ function CobrarTab({ recibos }: any) {
     .sort((a: any, b: any) => b.dias - a.dias); // mais antigos primeiro
 
   if (pend.length === 0) {
-    return <div className={styles.empty}>Tudo cobrado 🎉 — sem recibos por receber.</div>;
+    return <div className={styles.empty}>Tudo recebido 🎉 — sem recibos por receber.</div>;
   }
 
   const totalBruto = pend.reduce((s: number, x: any) => s + x.imp.bruto, 0);
@@ -292,7 +292,7 @@ function CobrarTab({ recibos }: any) {
     <>
       <div className={styles.statsGrid}>
         <div className="card" style={{ padding: "13px 15px", borderTop: "3px solid #DC4A36" }}>
-          <div className={styles.statLabel}>Total por cobrar</div>
+          <div className={styles.statLabel}>Total por receber</div>
           <div className={styles.statValue} style={{ color: "#DC4A36" }}>{fmtMoney(round2(totalBruto))}</div>
           <div className={styles.statSub}>{pend.length} recibo(s) · líq. {fmtMoney(round2(totalLiq))}</div>
         </div>
