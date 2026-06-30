@@ -51,6 +51,7 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
+  min-width: 0; /* permite encolher abaixo da largura intrínseca do <input date> */
 }
 .field span {
   font-size: 9.5px;
@@ -71,6 +72,9 @@
   background: var(--cream);
   color: var(--text-primary);
   color-scheme: light dark;
+  width: 100%;
+  min-width: 0; /* não transbordar a célula → não tapar o input vizinho */
+  box-sizing: border-box;
 }
 .field input:focus {
   outline: none;
