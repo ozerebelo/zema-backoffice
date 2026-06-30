@@ -24,7 +24,20 @@ export default async function DashboardPage() {
     prisma.lead.findMany(),
     prisma.proposta.findMany(),
     prisma.ivaState.findMany(),
-    prisma.activity.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
+    // Feed de ciclo de vida (novo projeto, recibo, lead). Exclui o lixo legacy
+    // da importação ("avançou para…", "Dados importados/exportados"), que dava
+    // a sensação de duplicar a "Recentes" (movimentos de receção/entrega).
+    prisma.activity.findMany({
+      where: {
+        NOT: [
+          { text: { contains: "avançou para" } },
+          { text: { contains: "Dados importados" } },
+          { text: { contains: "Dados exportados" } },
+        ],
+      },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    }),
   ]);
 
   const ano = new Date().getFullYear();
