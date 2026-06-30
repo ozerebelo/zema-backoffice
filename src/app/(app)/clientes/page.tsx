@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Page } from "@/components/Page";
 import { deleteCliente } from "./actions";
+import { DeleteButton } from "@/components/DeleteButton";
 import { fmtMoney } from "@/lib/dates";
 import styles from "./clientes-list.module.css";
 
@@ -34,7 +35,7 @@ export default async function ClientesPage() {
               <th>Empresa</th>
               <th>Contactos</th>
               <th>Projetos</th>
-              <th className={styles.right}>Faturado</th>
+              <th className={styles.right}>Contratado</th>
               <th />
             </tr>
           </thead>
@@ -69,11 +70,14 @@ export default async function ClientesPage() {
                       <Link href={`/clientes/${c.id}/editar`} className={styles.iconBtn} title="Editar">
                         <i className="ti ti-edit" />
                       </Link>
-                      <form action={deleteCliente.bind(null, c.id)}>
-                        <button type="submit" className={`${styles.iconBtn} ${styles.del}`} title="Eliminar">
-                          <i className="ti ti-trash" />
-                        </button>
-                      </form>
+                      <DeleteButton
+                        action={deleteCliente.bind(null, c.id)}
+                        confirmText={`Apagar o cliente "${c.nome}"? Os contactos são removidos e os projetos ficam sem cliente. Esta ação é irreversível.`}
+                        className={`${styles.iconBtn} ${styles.del}`}
+                        title="Eliminar"
+                      >
+                        <i className="ti ti-trash" />
+                      </DeleteButton>
                     </div>
                   </td>
                 </tr>

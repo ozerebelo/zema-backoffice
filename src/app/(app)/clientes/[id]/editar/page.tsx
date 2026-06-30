@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Page } from "@/components/Page";
 import { ClienteForm } from "@/components/ClienteForm";
+import { DeleteButton } from "@/components/DeleteButton";
 import { updateCliente, deleteCliente } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -39,11 +40,16 @@ export default async function EditarClientePage({ params }: { params: Promise<{ 
         }}
       />
 
-      <form action={del} style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid var(--border)" }}>
-        <button type="submit" className="btn btn-ghost btn-sm" style={{ color: "var(--red)" }}>
+      <DeleteButton
+        action={del}
+        confirmText={`Apagar o cliente "${c.nome}"? Os contactos são removidos e os projetos ficam sem cliente. Esta ação é irreversível.`}
+        className="btn btn-ghost btn-sm"
+        formStyle={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid var(--border)" }}
+      >
+        <span style={{ color: "var(--red)" }}>
           <i className="ti ti-trash" /> Apagar cliente
-        </button>
-      </form>
+        </span>
+      </DeleteButton>
     </Page>
   );
 }

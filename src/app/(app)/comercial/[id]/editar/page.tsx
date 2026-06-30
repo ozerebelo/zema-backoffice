@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Page } from "@/components/Page";
 import { LeadForm } from "@/components/LeadForm";
+import { DeleteButton } from "@/components/DeleteButton";
 import { updateLead, deleteLead, promoteLead } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -56,11 +57,16 @@ export default async function EditarLeadPage({ params }: { params: Promise<{ id:
         }}
       />
 
-      <form action={del} style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid var(--border)" }}>
-        <button type="submit" className="btn btn-ghost btn-sm" style={{ color: "var(--red)" }}>
+      <DeleteButton
+        action={del}
+        confirmText={`Apagar o lead "${l.titulo}"? Esta ação é irreversível.`}
+        className="btn btn-ghost btn-sm"
+        formStyle={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid var(--border)" }}
+      >
+        <span style={{ color: "var(--red)" }}>
           <i className="ti ti-trash" /> Apagar lead
-        </button>
-      </form>
+        </span>
+      </DeleteButton>
     </Page>
   );
 }

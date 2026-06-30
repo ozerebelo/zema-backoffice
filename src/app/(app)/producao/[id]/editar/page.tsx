@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Page } from "@/components/Page";
 import { ProjetoForm } from "@/components/ProjetoForm";
+import { DeleteButton } from "@/components/DeleteButton";
 import { updateProjeto, deleteProjeto } from "../../projeto-actions";
 import { toDateInput } from "@/lib/dates";
 
@@ -57,14 +58,16 @@ export default async function EditarProjetoPage({
         }}
       />
 
-      <form
+      <DeleteButton
         action={del}
-        style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid var(--border)" }}
+        confirmText={`Apagar o projeto "${p.titulo}"? Episódios e recibos associados são removidos. Esta ação é irreversível.`}
+        className="btn btn-ghost btn-sm"
+        formStyle={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid var(--border)" }}
       >
-        <button type="submit" className="btn btn-ghost btn-sm" style={{ color: "var(--red)" }}>
+        <span style={{ color: "var(--red)" }}>
           <i className="ti ti-trash" /> Apagar projeto
-        </button>
-      </form>
+        </span>
+      </DeleteButton>
     </Page>
   );
 }

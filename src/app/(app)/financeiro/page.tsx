@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Page } from "@/components/Page";
 import { PropostaEstadoSelect } from "@/components/PropostaEstadoSelect";
+import { DeleteButton } from "@/components/DeleteButton";
 import { toggleReciboPago, setIvaQuarter, deleteRecibo } from "./actions";
 import { calcImpostos, getQuarter, quarterLabel, quarterDeadlineLabel, quarterDeadlineDate } from "@/lib/tax";
 import { yearSummary, roundSummary, reciboImpostos } from "@/lib/finance";
@@ -241,11 +242,14 @@ function RecibosTab({ recibos, ano, ivaStates }: any) {
                       <i className={`ti ${r.pago ? "ti-circle-check" : "ti-circle"}`} />
                     </button>
                   </form>
-                  <form action={deleteRecibo.bind(null, r.id)}>
-                    <button type="submit" className={styles.iconBtn} title="Apagar" style={{ color: "var(--text-muted)" }}>
-                      <i className="ti ti-trash" />
-                    </button>
-                  </form>
+                  <DeleteButton
+                    action={deleteRecibo.bind(null, r.id)}
+                    confirmText={`Apagar o recibo de ${fmtMoney(Number(r.valor))}? Esta ação é irreversível.`}
+                    className={styles.iconBtn}
+                    title="Apagar"
+                  >
+                    <i className="ti ti-trash" style={{ color: "var(--text-muted)" }} />
+                  </DeleteButton>
                 </div>
               );
             })}
