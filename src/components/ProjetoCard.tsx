@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { calcProjStatus, getNextDeadline, urgencyFromDeadline, PCOLORS, PSHORT } from "@/lib/producao";
+import { calcProjStatus, getNextDeadline, urgencyFromDeadline, PSHORT, faseColor } from "@/lib/producao";
 import { quickSetProjetoFase } from "@/app/(app)/producao/projeto-actions";
 import { REVIEW, reviewLabel, type ReviewStatus } from "@/lib/domain";
 import { fmtMoney } from "@/lib/dates";
 import styles from "./projeto-card.module.css";
 
-type Ep = { fase: number; entrega: Date | null; entregaReal: Date | null };
+type Ep = { fase: number; entrega: Date | null; entregaReal: Date | null; recReal: Date | null };
 type Proj = {
   id: string;
   titulo: string;
@@ -18,6 +18,7 @@ type Proj = {
   episodios: Ep[];
   faturado: number;
   review: { status: string | null; round: number };
+  materialChegou: boolean;
 };
 
 export function ProjetoCard({ p }: { p: Proj }) {
@@ -25,7 +26,7 @@ export function ProjetoCard({ p }: { p: Proj }) {
   const urg = urgencyFromDeadline(getNextDeadline(p));
   const total = p.eps ?? 0;
   const eps = [...p.episodios];
-  while (eps.length < total) eps.push({ fase: 0, entrega: null, entregaReal: null });
+  while (eps.length < total) eps.push({ fase: 0, entrega: null, entregaReal: null, recReal: null });
 
   const pct = p.valor > 0 ? Math.min(100, Math.round((p.faturado / p.valor) * 100)) : 0;
   const finColor = pct >= 100 ? "#059669" : pct > 0 ? "#2563EB" : "var(--border)";
@@ -45,7 +46,7 @@ export function ProjetoCard({ p }: { p: Proj }) {
             {reviewLabel(p.review.status, p.review.round)}
           </span>
         ) : (
-          <span className={styles.phase} style={{ background: status.color }}>{PSHORT[status.fase]}</span>
+          <span className={styles.phase} style={{ background: faseColor(status.fase, p.materialChegou) }}>{PSHORT[status.fase]}</span>
         )}
       </div>
       <div className={styles.cli}>
@@ -57,7 +58,7 @@ export function ProjetoCard({ p }: { p: Proj }) {
       {total > 0 && total <= 16 && (
         <div className={styles.strip}>
           {eps.map((e, i) => (
-            <div key={i} className={styles.seg} style={{ background: PCOLORS[Math.min(e.fase ?? 0, 4)] }} title={`Ep.${i + 1}`} />
+            <div key={i} className={styles.seg} style={{ background: faseColor(Math.min(e.fase ?? 0, 4), !!e.recReal) }} title={`Ep.${i + 1}`} />
           ))}
         </div>
       )}
@@ -65,7 +66,7 @@ export function ProjetoCard({ p }: { p: Proj }) {
         <div className={styles.pills}>
           {PSHORT.map((ph, pi) => {
             const c = status.counts[pi];
-            return c ? <span key={pi} className={styles.pill} style={{ background: PCOLORS[pi] }}>{c} {ph}</span> : null;
+            return c ? <span key={pi} className={styles.pill} style={{ background: faseColor(pi, p.materialChegou) }}>{c} {ph}</span> : null;
           })}
         </div>
       )}
@@ -82,8 +83,8 @@ export function ProjetoCard({ p }: { p: Proj }) {
                   type="submit"
                   className={styles.phaseBtn}
                   style={{
-                    border: `1px solid ${cur ? PCOLORS[i] : "var(--border)"}`,
-                    background: cur ? PCOLORS[i] : done ? "rgba(18,40,76,.07)" : "transparent",
+                    border: `1px solid ${cur ? faseColor(i, p.materialChegou) : "var(--border)"}`,
+                    background: cur ? faseColor(i, p.materialChegou) : done ? "rgba(18,40,76,.07)" : "transparent",
                     color: cur ? "#fff" : done ? "var(--ink)" : "var(--text-muted)",
                   }}
                 >

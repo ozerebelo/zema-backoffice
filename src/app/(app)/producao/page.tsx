@@ -112,9 +112,10 @@ export default async function ProducaoPage({ searchParams }: { searchParams: Pro
             p={{
               id: p.id, titulo: p.titulo, fase: p.fase, eps: p.eps, valor: Number(p.valor),
               prazo: p.prazo, dp: p.dp, cliente: p.cliente?.nome ?? null,
-              episodios: p.episodios.map((e) => ({ fase: e.fase, entrega: e.entrega, entregaReal: e.entregaReal })),
+              episodios: p.episodios.map((e) => ({ fase: e.fase, entrega: e.entrega, entregaReal: e.entregaReal, recReal: e.recReal })),
               faturado: faturadoBy.get(p.id) ?? 0,
               review: projReview(p),
+              materialChegou: p.episodios.length > 0 ? p.episodios.some((e) => e.recReal != null) : !!p.recepcao,
             }}
           />
         ))}

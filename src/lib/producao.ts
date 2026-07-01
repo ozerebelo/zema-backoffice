@@ -3,6 +3,16 @@ export const PCOLORS = ["#8a9ab5", "#2563EB", "#D97706", "#7C3AED", "#059669"];
 export const PSHORT = ["CF", "GR", "VIS", "DL", "✓"];
 export const PNAMES = ["Conform", "Grading", "Visionam.", "Delivers", "Entregue"];
 
+// CF tem duas leituras: material por chegar (cinzento) vs recebido/em conform (teal).
+export const CF_ESPERA = "#6b7280";
+export const CF_RECEBIDO = "#0891B2";
+
+/** Cor de uma fase; no CF depende de o material já ter chegado. */
+export function faseColor(fase: number, materialChegou: boolean): string {
+  if (fase === 0) return materialChegou ? CF_RECEBIDO : CF_ESPERA;
+  return PCOLORS[fase] ?? PCOLORS[0];
+}
+
 export type EpLite = { fase: number; entrega: Date | null; entregaReal: Date | null };
 export type ProjLite = { fase: number; eps: number; prazo: Date | null; episodios: EpLite[] };
 
