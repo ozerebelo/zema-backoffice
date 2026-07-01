@@ -25,8 +25,8 @@ export function ProducaoFilters({ clientes, anos }: { clientes: { id: string; no
       <select className={styles.filterSel} defaultValue={sp.get("fase") ?? "all"} onChange={(e) => set("fase", e.target.value)}>
         <option value="all">Todas as fases</option>
         <option value="0">Conform / Ingest</option>
-        <option value="1">Sessão 1</option>
-        <option value="2">Sessão 2</option>
+        <option value="1">Grading</option>
+        <option value="2">Visionamento</option>
         <option value="3">Deliverables</option>
       </select>
       <select className={styles.filterSel} defaultValue={sp.get("cli") ?? "all"} onChange={(e) => set("cli", e.target.value)}>

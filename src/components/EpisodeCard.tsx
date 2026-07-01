@@ -21,7 +21,7 @@ type Ep = {
   reviewRound: number;
 };
 
-const SHORT = ["CF", "S1", "S2", "DL", "✓"];
+const SHORT = ["CF", "GR", "VIS", "DL", "✓"];
 
 export function EpisodeCard({ ep }: { ep: Ep }) {
   const router = useRouter();
@@ -63,6 +63,8 @@ export function EpisodeCard({ ep }: { ep: Ep }) {
   }
 
   const delivered = !!ep.entregaReal;
+  const materialChegou = !!ep.recReal;
+  const aguardaMaterial = ep.fase === 0 && !materialChegou; // CF só acende com material
 
   return (
     <div className={`${styles.card} ${delivered ? styles.done : ""}`} aria-busy={pending || busy}>
@@ -75,7 +77,7 @@ export function EpisodeCard({ ep }: { ep: Ep }) {
             </span>
           )}
           <span className={`badge ${delivered ? "badge-green" : "badge-grey"}`}>
-            {PROD_PHASES_SHORT[ep.fase] ?? PROD_PHASES_SHORT[0]}
+            {aguardaMaterial ? "Aguarda material" : (PROD_PHASES_SHORT[ep.fase] ?? PROD_PHASES_SHORT[0])}
           </span>
           <button
             type="button"
@@ -118,7 +120,7 @@ export function EpisodeCard({ ep }: { ep: Ep }) {
           <button
             key={i}
             type="button"
-            className={`${styles.faseBtn} ${i === ep.fase ? styles.faseActive : ""}`}
+            className={`${styles.faseBtn} ${i === ep.fase && !(i === 0 && !materialChegou) ? styles.faseActive : ""}`}
             onClick={() => setFase(i)}
             disabled={pending || busy}
             title={PROD_PHASES_SHORT[i]}

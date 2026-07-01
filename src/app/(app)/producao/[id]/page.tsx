@@ -121,6 +121,7 @@ export default async function ProjetoDetailPage({
                   prazoLabel={p.prazo ? fmtShort(p.prazo) : null}
                   reviewStatus={p.reviewStatus}
                   reviewRound={p.reviewRound}
+                  materialChegou={!!p.recepcao}
                 />
               </div>
               <form action={addEpisode.bind(null, p.id)} style={{ marginBottom: 22 }}>

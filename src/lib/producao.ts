@@ -1,7 +1,7 @@
 // Lógica de estado/urgência de projetos (porta de calcProjStatus / getNextDeadline / urgencyFromDeadline).
 export const PCOLORS = ["#8a9ab5", "#2563EB", "#D97706", "#7C3AED", "#059669"];
-export const PSHORT = ["CF", "S1", "S2", "DL", "✓"];
-export const PNAMES = ["Conform", "Sess.1", "Sess.2", "Delivers", "Entregue"];
+export const PSHORT = ["CF", "GR", "VIS", "DL", "✓"];
+export const PNAMES = ["Conform", "Grading", "Visionam.", "Delivers", "Entregue"];
 
 export type EpLite = { fase: number; entrega: Date | null; entregaReal: Date | null };
 export type ProjLite = { fase: number; eps: number; prazo: Date | null; episodios: EpLite[] };

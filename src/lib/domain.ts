@@ -17,16 +17,16 @@ export const LEAD_STAGE_LABEL: Record<LeadStage, string> = Object.fromEntries(
 // ─── Produção (fase 0..4) ────────────────────────────────────────
 export const PROD_PHASES = [
   "Conform / Ingest",
-  "Sessão 1 — Primary",
-  "Sessão 2 — Revisão",
+  "Grading",
+  "Visionamento",
   "Deliverables / DCP",
   "Entregue",
 ] as const;
 
 export const PROD_PHASES_SHORT = [
   "Conform/Ingest",
-  "Sessão 1",
-  "Sessão 2",
+  "Grading",
+  "Visionamento",
   "Deliverables",
   "Entregue",
 ] as const;

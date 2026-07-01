@@ -11,7 +11,7 @@ import { PROD_PHASES_SHORT, faseLabel } from "@/lib/domain";
 import { ReviewControl } from "./ReviewControl";
 import ep from "./episode.module.css";
 
-const SHORT = ["CF", "S1", "S2", "DL", "✓"];
+const SHORT = ["CF", "GR", "VIS", "DL", "✓"];
 
 /** Controlo de fase para projetos sem episódios. Espelha o EpisodeCard:
  *  date-picker de entrega real (marca entregue) + strip de fases. */
@@ -22,6 +22,7 @@ export function ProjetoFase({
   prazoLabel,
   reviewStatus,
   reviewRound,
+  materialChegou,
 }: {
   projetoId: string;
   fase: number;
@@ -29,11 +30,13 @@ export function ProjetoFase({
   prazoLabel: string | null;
   reviewStatus: string | null;
   reviewRound: number;
+  materialChegou: boolean;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [busy, setBusy] = useState(false);
   const delivered = fase >= 4;
+  const aguardaMaterial = fase === 0 && !materialChegou && !delivered;
 
   function review(a: "feedback" | "reentregar" | "aprovar" | "reabrir") {
     setBusy(true);
@@ -67,7 +70,7 @@ export function ProjetoFase({
       aria-busy={pending || busy}
     >
       <div className={ep.head}>
-        <span className={ep.epNum}>{faseLabel(fase)}</span>
+        <span className={ep.epNum}>{aguardaMaterial ? "Aguarda material" : faseLabel(fase)}</span>
         <span className={`badge ${delivered ? "badge-green" : "badge-grey"}`}>
           {PROD_PHASES_SHORT[fase] ?? PROD_PHASES_SHORT[0]}
         </span>
@@ -97,7 +100,7 @@ export function ProjetoFase({
           <button
             key={i}
             type="button"
-            className={`${ep.faseBtn} ${i === fase ? ep.faseActive : ""}`}
+            className={`${ep.faseBtn} ${i === fase && !(i === 0 && !materialChegou) ? ep.faseActive : ""}`}
             onClick={() => setFase(i)}
             disabled={pending || busy}
             title={PROD_PHASES_SHORT[i]}
