@@ -206,6 +206,21 @@ export async function setProjetoEntregaReal(projetoId: string, value: string | n
   revalidatePath("/");
 }
 
+/** Datas planeadas (receção/prazo) de um projeto sem episódios. */
+export async function setProjetoData(
+  projetoId: string,
+  field: "recepcao" | "prazo",
+  value: string | null
+) {
+  await prisma.projeto.update({
+    where: { id: projetoId },
+    data: { [field]: parseDateOnly(value) },
+  });
+  revalidatePath("/producao");
+  revalidatePath(`/producao/${projetoId}`);
+  revalidatePath("/");
+}
+
 /** Receção real do material (projetos sem episódios). Ativa o CF. */
 export async function setProjetoRecepcaoReal(projetoId: string, value: string | null) {
   const date = parseDateOnly(value);

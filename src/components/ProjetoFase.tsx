@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   quickSetProjetoFase,
+  setProjetoData,
   setProjetoEntregaReal,
   setProjetoRecepcaoReal,
   setProjetoReview,
@@ -19,19 +20,21 @@ const SHORT = ["CF", "GR", "VIS", "DL", "✓"];
 export function ProjetoFase({
   projetoId,
   fase,
+  recepcao,
+  recepcaoReal,
+  prazo,
   entregaReal,
-  prazoLabel,
   reviewStatus,
   reviewRound,
-  recepcaoReal,
 }: {
   projetoId: string;
   fase: number;
+  recepcao: string | null;
+  recepcaoReal: string | null;
+  prazo: string | null;
   entregaReal: string | null;
-  prazoLabel: string | null;
   reviewStatus: string | null;
   reviewRound: number;
-  recepcaoReal: string | null;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -73,6 +76,14 @@ export function ProjetoFase({
       setBusy(false);
     });
   }
+  function setPlan(field: "recepcao" | "prazo", value: string) {
+    setBusy(true);
+    start(async () => {
+      await setProjetoData(projetoId, field, value || null);
+      router.refresh();
+      setBusy(false);
+    });
+  }
 
   return (
     <div
@@ -88,27 +99,22 @@ export function ProjetoFase({
 
       <div className={ep.grid}>
         <label className={ep.field}>
+          <span>Receção prevista</span>
+          <input type="date" defaultValue={recepcao ?? ""} onChange={(e) => setPlan("recepcao", e.target.value)} />
+        </label>
+        <label className={ep.field}>
           <span className={ep.real}>Receção real</span>
-          <input
-            type="date"
-            defaultValue={recepcaoReal ?? ""}
-            onChange={(e) => setRecepcao(e.target.value)}
-          />
+          <input type="date" defaultValue={recepcaoReal ?? ""} onChange={(e) => setRecepcao(e.target.value)} />
+        </label>
+        <label className={ep.field}>
+          <span>Entrega prevista</span>
+          <input type="date" defaultValue={prazo ?? ""} onChange={(e) => setPlan("prazo", e.target.value)} />
         </label>
         <label className={ep.field}>
           <span className={ep.real}>Entrega real</span>
-          <input
-            type="date"
-            defaultValue={entregaReal ?? ""}
-            onChange={(e) => setEntrega(e.target.value)}
-          />
+          <input type="date" defaultValue={entregaReal ?? ""} onChange={(e) => setEntrega(e.target.value)} />
         </label>
       </div>
-      {prazoLabel && (
-        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
-          Prazo de entrega: {prazoLabel}
-        </div>
-      )}
 
       <div className={ep.faseRow}>
         {SHORT.map((s, i) => (

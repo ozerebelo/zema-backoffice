@@ -117,11 +117,12 @@ export default async function ProjetoDetailPage({
                 <ProjetoFase
                   projetoId={p.id}
                   fase={p.fase}
+                  recepcao={toDateInput(p.recepcao)}
+                  recepcaoReal={toDateInput(p.recepcaoReal)}
+                  prazo={toDateInput(p.prazo)}
                   entregaReal={toDateInput(p.entregaReal)}
-                  prazoLabel={p.prazo ? fmtShort(p.prazo) : null}
                   reviewStatus={p.reviewStatus}
                   reviewRound={p.reviewRound}
-                  recepcaoReal={toDateInput(p.recepcaoReal)}
                 />
               </div>
               <form action={addEpisode.bind(null, p.id)} style={{ marginBottom: 22 }}>
