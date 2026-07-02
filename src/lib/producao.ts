@@ -52,8 +52,10 @@ export function calcProjStatus(p: ProjLite) {
   }
   const counts = [0, 0, 0, 0, 0];
   eps.forEach((e) => (counts[Math.min(e.fase ?? 0, 4)] += 1));
-  let active = 4;
-  for (let i = 0; i < 4; i++) if (counts[i] > 0) { active = i; break; }
+  // fase "atual" = a mais avançada ainda por entregar (o episódio em que se
+  // trabalha); se estiverem todos entregues → 4.
+  const pend = eps.filter((e) => (e.fase ?? 0) < 4).map((e) => e.fase ?? 0);
+  const active = pend.length ? Math.max(...pend) : 4;
   return { label: PNAMES[active], color: PCOLORS[active], fase: active, counts };
 }
 
