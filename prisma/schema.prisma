@@ -111,6 +111,7 @@ model Projeto {
   eps           Int       @default(0)
   valEp         Decimal?  @map("val_ep") @db.Decimal(10, 2) // valor por episódio (opcional; valor = total)
   recepcao      DateTime? @db.Date
+  recepcaoReal  DateTime? @map("recepcao_real") @db.Date // receção real do material (projetos sem episódios)
   prazo         DateTime? @db.Date
   entregaReal   DateTime? @map("entrega_real") @db.Date // data real de entrega do projeto (sem episódios)
   fase          Int       @default(0) // 0..4 — ver PROD_PHASES em src/lib/domain.ts

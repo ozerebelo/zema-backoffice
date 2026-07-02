@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   quickSetProjetoFase,
   setProjetoEntregaReal,
+  setProjetoRecepcaoReal,
   setProjetoReview,
 } from "@/app/(app)/producao/projeto-actions";
 import { PROD_PHASES_SHORT, faseLabel } from "@/lib/domain";
@@ -22,7 +23,7 @@ export function ProjetoFase({
   prazoLabel,
   reviewStatus,
   reviewRound,
-  materialChegou,
+  recepcaoReal,
 }: {
   projetoId: string;
   fase: number;
@@ -30,12 +31,13 @@ export function ProjetoFase({
   prazoLabel: string | null;
   reviewStatus: string | null;
   reviewRound: number;
-  materialChegou: boolean;
+  recepcaoReal: string | null;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [busy, setBusy] = useState(false);
   const delivered = fase >= 4;
+  const materialChegou = !!recepcaoReal;
   const aguardaMaterial = fase === 0 && !materialChegou && !delivered;
 
   function review(a: "feedback" | "reentregar" | "aprovar" | "reabrir") {
@@ -63,6 +65,14 @@ export function ProjetoFase({
       setBusy(false);
     });
   }
+  function setRecepcao(value: string) {
+    setBusy(true);
+    start(async () => {
+      await setProjetoRecepcaoReal(projetoId, value || null);
+      router.refresh();
+      setBusy(false);
+    });
+  }
 
   return (
     <div
@@ -78,6 +88,14 @@ export function ProjetoFase({
 
       <div className={ep.grid}>
         <label className={ep.field}>
+          <span className={ep.real}>Receção real</span>
+          <input
+            type="date"
+            defaultValue={recepcaoReal ?? ""}
+            onChange={(e) => setRecepcao(e.target.value)}
+          />
+        </label>
+        <label className={ep.field}>
           <span className={ep.real}>Entrega real</span>
           <input
             type="date"
@@ -85,15 +103,12 @@ export function ProjetoFase({
             onChange={(e) => setEntrega(e.target.value)}
           />
         </label>
-        {prazoLabel && (
-          <div className={ep.field}>
-            <span>Prazo</span>
-            <div style={{ fontSize: 12, padding: "5px 1px", color: "var(--text-secondary)" }}>
-              {prazoLabel}
-            </div>
-          </div>
-        )}
       </div>
+      {prazoLabel && (
+        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
+          Prazo de entrega: {prazoLabel}
+        </div>
+      )}
 
       <div className={ep.faseRow}>
         {SHORT.map((s, i) => (

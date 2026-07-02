@@ -118,7 +118,7 @@ export default async function ProducaoPage({ searchParams }: { searchParams: Pro
               materialChegou:
                 p.episodios.length > 0
                   ? p.episodios.some((e) => e.fase < 4 && e.recReal != null) // algum episódio em curso já com material
-                  : p.recepcao != null && p.recepcao <= new Date(), // sem episódios: receção já passou (não planeada futura)
+                  : p.recepcaoReal != null, // sem episódios: receção real registada
             }}
           />
         ))}

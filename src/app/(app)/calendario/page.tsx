@@ -34,8 +34,9 @@ export default async function CalendarioPage({ searchParams }: { searchParams: P
         if (rec) evs.push({ day: toDateInput(rec), kind: "rec", label: `${p.titulo} Ep.${i + 1}`, color, href, real: !!e.recReal });
         if (ent) evs.push({ day: toDateInput(ent), kind: "ent", label: `${p.titulo} Ep.${i + 1}`, color, href, real: !!e.entregaReal });
       });
-    } else if (p.recepcao || p.prazo || p.entregaReal) {
-      if (p.recepcao) evs.push({ day: toDateInput(p.recepcao), kind: "rec", label: p.titulo, color, href, real: false });
+    } else if (p.recepcao || p.recepcaoReal || p.prazo || p.entregaReal) {
+      const rec = p.recepcaoReal ?? p.recepcao; // receção real quando existe, senão a planeada
+      if (rec) evs.push({ day: toDateInput(rec), kind: "rec", label: p.titulo, color, href, real: !!p.recepcaoReal });
       const ent = p.entregaReal ?? p.prazo; // entrega real quando existe, senão o prazo planeado
       if (ent) evs.push({ day: toDateInput(ent), kind: "ent", label: p.titulo, color, href, real: !!p.entregaReal });
     }

@@ -98,7 +98,7 @@ export default async function DashboardPage() {
         if (e.entregaReal) movimentos.push({ id: p.id, titulo: p.titulo, cliente, kind: "entrega", label: `Ep. ${e.idx + 1} entregue`, date: e.entregaReal });
       }
     } else {
-      if (p.recepcao) movimentos.push({ id: p.id, titulo: p.titulo, cliente, kind: "rec", label: "Material recebido", date: p.recepcao });
+      if (p.recepcaoReal) movimentos.push({ id: p.id, titulo: p.titulo, cliente, kind: "rec", label: "Material recebido", date: p.recepcaoReal });
       if (p.entregaReal) movimentos.push({ id: p.id, titulo: p.titulo, cliente, kind: "entrega", label: "Entregue", date: p.entregaReal });
     }
   }
