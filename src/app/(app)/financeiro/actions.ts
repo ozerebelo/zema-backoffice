@@ -9,13 +9,42 @@ import type { FinState } from "@prisma/client";
 
 function revalidateFin() {
   revalidatePath("/financeiro");
+  revalidatePath("/producao");
   revalidatePath("/");
+}
+
+/** Arquiva (proposta → "pago") quando o total de recibos pagos cobre o valor
+ *  do projeto; reverte para "faturado" se deixar de cobrir. */
+async function syncPropostaPago(projetoId: string) {
+  const [projeto, recibos] = await Promise.all([
+    prisma.projeto.findUnique({ where: { id: projetoId }, select: { valor: true } }),
+    prisma.recibo.findMany({ where: { projetoId }, select: { valor: true, pago: true } }),
+  ]);
+  if (!projeto) return;
+  const valorCents = Math.round(Number(projeto.valor) * 100);
+  const pagoCents = recibos
+    .filter((x) => x.pago)
+    .reduce((s, x) => s + Math.round(Number(x.valor) * 100), 0);
+  const totalmentePago = valorCents > 0 && pagoCents >= valorCents;
+
+  if (totalmentePago) {
+    await prisma.proposta.updateMany({
+      where: { projetoId, NOT: { estado: "pago" } },
+      data: { estado: "pago" },
+    });
+  } else {
+    await prisma.proposta.updateMany({
+      where: { projetoId, estado: "pago" },
+      data: { estado: "faturado" },
+    });
+  }
 }
 
 export async function toggleReciboPago(id: string) {
   const r = await prisma.recibo.findUnique({ where: { id } });
   if (!r) return;
   await prisma.recibo.update({ where: { id }, data: { pago: !r.pago } });
+  await syncPropostaPago(r.projetoId);
   revalidateFin();
 }
 
@@ -35,7 +64,9 @@ export async function updatePropostaEstado(id: string, estado: FinState) {
 
 export async function deleteRecibo(id: string) {
   await requireUser();
+  const r = await prisma.recibo.findUnique({ where: { id }, select: { projetoId: true } });
   await prisma.recibo.delete({ where: { id } });
+  if (r) await syncPropostaPago(r.projetoId);
   revalidateFin();
 }
 
@@ -67,6 +98,7 @@ export async function createRecibo(fd: FormData) {
     },
   });
 
+  await syncPropostaPago(projetoId);
   revalidateFin();
   redirect("/financeiro?tab=recibos");
 }
