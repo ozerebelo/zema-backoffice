@@ -1,11 +1,5 @@
 .calScroll {
-  overflow-x: auto;
-}
-/* Em ecrãs estreitos o mês não encolhe abaixo disto — passa a fazer scroll
-   horizontal em vez de espremer as células a ponto de ficarem ilegíveis. */
-.calScroll .weekHead,
-.calScroll .grid {
-  min-width: 740px;
+  min-width: 0;
 }
 
 .weekHead {
@@ -39,6 +33,8 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
+  min-width: 0; /* deixa a célula encolher e os eventos truncam (senão o grid
+                   transborda porque os eventos são nowrap) */
 }
 .out {
   background: var(--cream);
