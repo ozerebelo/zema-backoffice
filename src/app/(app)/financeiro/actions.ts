@@ -13,30 +13,36 @@ function revalidateFin() {
   revalidatePath("/");
 }
 
-/** Arquiva (proposta → "pago") quando o total de recibos pagos cobre o valor
- *  do projeto; reverte para "faturado" se deixar de cobrir. */
-async function syncPropostaPago(projetoId: string) {
-  const [projeto, recibos] = await Promise.all([
+/** Alinha o estado da proposta com os recibos:
+ *  totalmente pago → "pago"; totalmente emitido → "faturado"; se os recibos
+ *  deixarem de cobrir e a proposta estava em faturado/pago → "entregue".
+ *  Não mexe em estados manuais mais baixos (em produção / entregue). */
+async function syncPropostaEstado(projetoId: string) {
+  const [projeto, recibos, propostas] = await Promise.all([
     prisma.projeto.findUnique({ where: { id: projetoId }, select: { valor: true } }),
     prisma.recibo.findMany({ where: { projetoId }, select: { valor: true, pago: true } }),
+    prisma.proposta.findMany({ where: { projetoId }, select: { id: true, estado: true } }),
   ]);
-  if (!projeto) return;
-  const valorCents = Math.round(Number(projeto.valor) * 100);
-  const pagoCents = recibos
-    .filter((x) => x.pago)
-    .reduce((s, x) => s + Math.round(Number(x.valor) * 100), 0);
-  const totalmentePago = valorCents > 0 && pagoCents >= valorCents;
+  if (!projeto || propostas.length === 0) return;
 
-  if (totalmentePago) {
-    await prisma.proposta.updateMany({
-      where: { projetoId, NOT: { estado: "pago" } },
-      data: { estado: "pago" },
-    });
-  } else {
-    await prisma.proposta.updateMany({
-      where: { projetoId, estado: "pago" },
-      data: { estado: "faturado" },
-    });
+  const cents = (n: unknown) => Math.round(Number(n) * 100);
+  const valorC = cents(projeto.valor);
+  const faturadoC = recibos.reduce((s, r) => s + cents(r.valor), 0);
+  const pagoC = recibos.filter((r) => r.pago).reduce((s, r) => s + cents(r.valor), 0);
+
+  let target: FinState | null = null;
+  if (valorC > 0 && pagoC >= valorC) target = "pago";
+  else if (valorC > 0 && faturadoC >= valorC) target = "faturado";
+
+  for (const pr of propostas) {
+    if (target) {
+      if (pr.estado !== target) {
+        await prisma.proposta.update({ where: { id: pr.id }, data: { estado: target } });
+      }
+    } else if (pr.estado === "faturado" || pr.estado === "pago") {
+      // recibos já não cobrem o valor → sai de faturado/pago
+      await prisma.proposta.update({ where: { id: pr.id }, data: { estado: "entregue" } });
+    }
   }
 }
 
@@ -44,7 +50,7 @@ export async function toggleReciboPago(id: string) {
   const r = await prisma.recibo.findUnique({ where: { id } });
   if (!r) return;
   await prisma.recibo.update({ where: { id }, data: { pago: !r.pago } });
-  await syncPropostaPago(r.projetoId);
+  await syncPropostaEstado(r.projetoId);
   revalidateFin();
 }
 
@@ -66,7 +72,7 @@ export async function deleteRecibo(id: string) {
   await requireUser();
   const r = await prisma.recibo.findUnique({ where: { id }, select: { projetoId: true } });
   await prisma.recibo.delete({ where: { id } });
-  if (r) await syncPropostaPago(r.projetoId);
+  if (r) await syncPropostaEstado(r.projetoId);
   revalidateFin();
 }
 
@@ -98,7 +104,7 @@ export async function createRecibo(fd: FormData) {
     },
   });
 
-  await syncPropostaPago(projetoId);
+  await syncPropostaEstado(projetoId);
   revalidateFin();
   redirect("/financeiro?tab=recibos");
 }

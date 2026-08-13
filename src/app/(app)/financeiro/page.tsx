@@ -7,7 +7,7 @@ import { toggleReciboPago, setIvaQuarter, deleteRecibo } from "./actions";
 import { calcImpostos, getQuarter, quarterLabel, quarterDeadlineLabel, quarterDeadlineDate } from "@/lib/tax";
 import { yearSummary, roundSummary, reciboImpostos } from "@/lib/finance";
 import { fmtMoney, fmtShort } from "@/lib/dates";
-import { FIN_STATE_BADGE } from "@/lib/domain";
+import { FIN_STATES, FIN_STATE_COLOR } from "@/lib/domain";
 import styles from "./financeiro.module.css";
 
 export const dynamic = "force-dynamic";
@@ -138,11 +138,50 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
   );
 }
 
-/* ── Projetos (em curso / pagos) ─────────────────────────────── */
+/* ── Projetos (agrupados por estado) ─────────────────────────── */
 function ProjetosTab({ propostas, recibos, sub, hrefSub }: any) {
-  const list = propostas
-    .filter((pr: any) => (sub === "pagos" ? pr.estado === "pago" : pr.estado !== "pago"))
-    .sort((a: any, b: any) => (a.projeto?.titulo ?? "").localeCompare(b.projeto?.titulo ?? "", "pt"));
+  const list = propostas.filter((pr: any) => (sub === "pagos" ? pr.estado === "pago" : pr.estado !== "pago"));
+  const order = sub === "pagos" ? ["pago"] : ["em_producao", "entregue", "faturado"];
+  const groups = order
+    .map((st) => ({
+      meta: FIN_STATES.find((s) => s.value === st)!,
+      items: list
+        .filter((pr: any) => pr.estado === st)
+        .sort((a: any, b: any) => (a.projeto?.titulo ?? "").localeCompare(b.projeto?.titulo ?? "", "pt")),
+    }))
+    .filter((g) => g.items.length > 0);
+
+  const row = (pr: any) => {
+    const val = Number(pr.valor);
+    const imp = calcImpostos(val, pr.internacional);
+    const faturado = recibos.filter((r: any) => r.projetoId === pr.projetoId).reduce((s: number, r: any) => s + Number(r.valor), 0);
+    const pct = val > 0 ? Math.min(100, Math.round((faturado / val) * 100)) : 0;
+    return (
+      <div className={styles.projRow} key={pr.id} style={{ borderLeft: `3px solid ${FIN_STATE_COLOR[pr.estado as keyof typeof FIN_STATE_COLOR]}` }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className={styles.projTitle}>
+            {pr.projeto?.titulo ?? "—"}
+            {pr.internacional ? <span className={styles.intTag}>INT</span> : null}
+          </div>
+          <div className={styles.projCli}>{pr.projeto?.cliente?.nome ?? "—"}</div>
+          {pr.internacional ? (
+            <div className={styles.projTax} style={{ color: "var(--green-fg)" }}>Internacional — isento</div>
+          ) : (
+            <div className={styles.projTax}>
+              Bruto c/IVA <b>{fmtMoney(imp.bruto)}</b> · IVA <b style={{ color: "var(--red)" }}>{fmtMoney(imp.iva)}</b> · Líquido <b style={{ color: "var(--green-fg)" }}>{fmtMoney(imp.liquido)}</b>
+            </div>
+          )}
+          {faturado > 0 && (
+            <div className={styles.bar}>
+              <div className={styles.barFill} style={{ width: `${pct}%` }} />
+            </div>
+          )}
+        </div>
+        <strong className={styles.projVal}>{fmtMoney(val)}</strong>
+        <PropostaEstadoSelect id={pr.id} estado={pr.estado} />
+      </div>
+    );
+  };
 
   return (
     <>
@@ -150,41 +189,19 @@ function ProjetosTab({ propostas, recibos, sub, hrefSub }: any) {
         <Link href={hrefSub("curso")} className={`${styles.subTab} ${sub !== "pagos" ? styles.subActive : ""}`}>Em curso</Link>
         <Link href={hrefSub("pagos")} className={`${styles.subTab} ${sub === "pagos" ? styles.subActive : ""}`}>Pagos / Arquivo</Link>
       </div>
-      <div className="card">
-        {list.length === 0 && <div className={styles.empty}>Nenhum projeto {sub === "pagos" ? "pago" : "em curso"}</div>}
-        {list.map((pr: any) => {
-          const val = Number(pr.valor);
-          const imp = calcImpostos(val, pr.internacional);
-          const faturado = recibos.filter((r: any) => r.projetoId === pr.projetoId).reduce((s: number, r: any) => s + Number(r.valor), 0);
-          const pct = val > 0 ? Math.min(100, Math.round((faturado / val) * 100)) : 0;
-          return (
-            <div className={styles.projRow} key={pr.id}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className={styles.projTitle}>
-                  {pr.projeto?.titulo ?? "—"}
-                  {pr.internacional ? <span className={styles.intTag}>INT</span> : null}
-                </div>
-                <div className={styles.projCli}>{pr.projeto?.cliente?.nome ?? "—"}</div>
-                {pr.internacional ? (
-                  <div className={styles.projTax} style={{ color: "var(--green-fg)" }}>Internacional — isento</div>
-                ) : (
-                  <div className={styles.projTax}>
-                    Bruto c/IVA <b>{fmtMoney(imp.bruto)}</b> · IVA <b style={{ color: "var(--red)" }}>{fmtMoney(imp.iva)}</b> · Líquido <b style={{ color: "var(--green-fg)" }}>{fmtMoney(imp.liquido)}</b>
-                  </div>
-                )}
-                {faturado > 0 && (
-                  <div className={styles.bar}>
-                    <div className={styles.barFill} style={{ width: `${pct}%` }} />
-                  </div>
-                )}
-              </div>
-              <strong className={styles.projVal}>{fmtMoney(val)}</strong>
-              <span className={`badge ${FIN_STATE_BADGE[pr.estado as keyof typeof FIN_STATE_BADGE]}`} style={{ marginRight: 4 }} />
-              <PropostaEstadoSelect id={pr.id} estado={pr.estado} />
-            </div>
-          );
-        })}
-      </div>
+      {groups.length === 0 && (
+        <div className="card"><div className={styles.empty}>Nenhum projeto {sub === "pagos" ? "pago" : "em curso"}</div></div>
+      )}
+      {groups.map((g) => (
+        <div className="card" key={g.meta.value} style={{ marginBottom: 12 }}>
+          <div className={styles.stateHead}>
+            <span className={styles.stateDot} style={{ background: g.meta.color }} />
+            <span style={{ color: g.meta.color }}>{g.meta.label}</span>
+            <span className={styles.stateCount}>{g.items.length}</span>
+          </div>
+          {g.items.map(row)}
+        </div>
+      ))}
     </>
   );
 }

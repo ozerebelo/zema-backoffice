@@ -51,12 +51,16 @@ export function reviewLabel(status: string | null, round?: number): string | nul
 }
 
 // ─── Financeiro (estado da proposta) ─────────────────────────────
-export const FIN_STATES: { value: FinState; label: string; badge: string }[] = [
-  { value: "em_producao", label: "Em produção", badge: "badge-blue" },
-  { value: "entregue", label: "Entregue", badge: "badge-amber" },
-  { value: "faturado", label: "Faturado", badge: "badge-purple" },
-  { value: "pago", label: "Pago", badge: "badge-green" },
+export const FIN_STATES: { value: FinState; label: string; badge: string; color: string }[] = [
+  { value: "em_producao", label: "Em produção", badge: "badge-blue", color: "#2563EB" },
+  { value: "entregue", label: "Entregue", badge: "badge-amber", color: "#D97706" },
+  { value: "faturado", label: "Faturado", badge: "badge-purple", color: "#7C3AED" },
+  { value: "pago", label: "Pago", badge: "badge-green", color: "#059669" },
 ];
+
+export const FIN_STATE_COLOR: Record<FinState, string> = Object.fromEntries(
+  FIN_STATES.map((s) => [s.value, s.color])
+) as Record<FinState, string>;
 
 export const FIN_STATE_LABEL: Record<FinState, string> = Object.fromEntries(
   FIN_STATES.map((s) => [s.value, s.label])
