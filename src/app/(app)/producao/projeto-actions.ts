@@ -109,6 +109,12 @@ export async function updateProjeto(id: string, fd: FormData) {
     },
   });
 
+  // A proposta espelha os termos financeiros do projeto — manter em sincronia.
+  await prisma.proposta.updateMany({
+    where: { projetoId: id },
+    data: { internacional: f.internacional, valor: f.valor },
+  });
+
   // Sincronizar nº de episódios (acrescenta no fim / remove os últimos)
   const have = current.episodios.length;
   if (f.eps > have) {
@@ -126,6 +132,7 @@ export async function updateProjeto(id: string, fd: FormData) {
 
   revalidatePath(`/producao/${id}`);
   revalidatePath("/producao");
+  revalidatePath("/financeiro");
   revalidatePath("/");
   redirect(`/producao/${id}`);
 }
