@@ -70,6 +70,13 @@
   text-overflow: ellipsis;
   color: var(--ink);
 }
+.more {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 1px 5px;
+  margin-top: 1px;
+}
 
 .viewToggle {
   display: inline-flex;

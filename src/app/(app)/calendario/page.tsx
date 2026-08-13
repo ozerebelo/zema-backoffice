@@ -120,10 +120,15 @@ export default async function CalendarioPage({ searchParams }: { searchParams: P
             const ds = toDateInput(d);
             const out = view === "month" && d.getUTCMonth() !== month;
             const dayEvs = byDay.get(ds) ?? [];
+            // Limite de eventos por dia (semana mostra mais) — o resto vai para
+            // "+N mais" e continua listado por baixo, para não esticar a linha.
+            const cap = view === "week" ? 12 : 4;
+            const shown = dayEvs.slice(0, cap);
+            const extra = dayEvs.length - shown.length;
             return (
               <div key={i} className={`${styles.cell} ${out ? styles.out : ""} ${ds === todayStr ? styles.today : ""}`}>
                 <div className={styles.dayNum}>{d.getUTCDate()}</div>
-                {dayEvs.map((e, j) => {
+                {shown.map((e, j) => {
                   const ent = e.kind === "ent";
                   return (
                     <Link
@@ -141,6 +146,7 @@ export default async function CalendarioPage({ searchParams }: { searchParams: P
                     </Link>
                   );
                 })}
+                {extra > 0 && <span className={styles.more}>+{extra} mais</span>}
               </div>
             );
           })}
