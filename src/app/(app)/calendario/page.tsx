@@ -10,6 +10,13 @@ const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julh
 const DIAS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const PALETTE = ["#2563EB", "#DC4A36", "#059669", "#7C3AED", "#D97706", "#0891B2", "#BE185D", "#65A30D", "#B45309", "#0F766E"];
 
+/** Cor estável e distinta por projeto (hash do id → paleta). */
+function projColor(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (Math.imul(h, 31) + id.charCodeAt(i)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+
 type Ev = { day: string; kind: "rec" | "ent"; label: string; color: string; href: string; real: boolean };
 
 export default async function CalendarioPage({ searchParams }: { searchParams: Promise<{ m?: string; view?: string }> }) {
@@ -25,7 +32,9 @@ export default async function CalendarioPage({ searchParams }: { searchParams: P
   // ── construir eventos (rec ↓ / entrega ↑), cor por projeto ──
   const evs: Ev[] = [];
   projetos.forEach((p, idx) => {
-    const color = p.color ?? PALETTE[idx % PALETTE.length];
+    // cor por projeto: respeita uma cor escolhida (≠ azul default), senão espalha
+    // deterministicamente pelo id para dar variedade (o default azul repetia-se).
+    const color = p.color && p.color.toLowerCase() !== "#2563eb" ? p.color : projColor(p.id);
     const href = `/producao/${p.id}`;
     if (p.eps > 0 && p.episodios.length) {
       p.episodios.forEach((e, i) => {
@@ -102,31 +111,49 @@ export default async function CalendarioPage({ searchParams }: { searchParams: P
         </div>
       }
     >
-      <div className={styles.weekHead}>
-        {DIAS.map((d) => <div key={d} className={styles.weekDay}>{d}</div>)}
-      </div>
-      <div className={styles.grid}>
-        {cells.map((d, i) => {
-          const ds = toDateInput(d);
-          const out = view === "month" && d.getUTCMonth() !== month;
-          const dayEvs = byDay.get(ds) ?? [];
-          return (
-            <div key={i} className={`${styles.cell} ${out ? styles.out : ""} ${ds === todayStr ? styles.today : ""}`}>
-              <div className={styles.dayNum}>{d.getUTCDate()}</div>
-              {dayEvs.map((e, j) => (
-                <Link key={j} href={e.href} className={styles.ev}
-                  style={{ background: `${e.color}22`, borderLeft: `2px solid ${e.color}` }} title={`${e.label} — ${e.kind === "rec" ? "Receção" : "Entrega"}`}>
-                  <span style={{ color: e.color, fontWeight: 700 }}>{e.kind === "rec" ? "↓" : "↑"}</span> {e.label}
-                </Link>
-              ))}
-            </div>
-          );
-        })}
+      <div className={styles.calScroll}>
+        <div className={styles.weekHead}>
+          {DIAS.map((d) => <div key={d} className={styles.weekDay}>{d}</div>)}
+        </div>
+        <div className={styles.grid}>
+          {cells.map((d, i) => {
+            const ds = toDateInput(d);
+            const out = view === "month" && d.getUTCMonth() !== month;
+            const dayEvs = byDay.get(ds) ?? [];
+            return (
+              <div key={i} className={`${styles.cell} ${out ? styles.out : ""} ${ds === todayStr ? styles.today : ""}`}>
+                <div className={styles.dayNum}>{d.getUTCDate()}</div>
+                {dayEvs.map((e, j) => {
+                  const ent = e.kind === "ent";
+                  return (
+                    <Link
+                      key={j}
+                      href={e.href}
+                      className={styles.ev}
+                      style={
+                        ent
+                          ? { background: e.color, borderLeft: `3px solid ${e.color}`, color: "#fff", fontWeight: 600 }
+                          : { background: `${e.color}14`, borderLeft: `3px dashed ${e.color}`, color: "var(--ink)" }
+                      }
+                      title={`${e.label} — ${ent ? "Entrega" : "Receção"}${e.real ? "" : " (prevista)"}`}
+                    >
+                      <span style={{ color: ent ? "#fff" : e.color, fontWeight: 800 }}>{ent ? "↑" : "↓"}</span> {e.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className={styles.legend}>
-        <span><span className={styles.arrow}>↓</span> Receção</span>
-        <span><span className={styles.arrow}>↑</span> Entrega</span>
+        <span className={styles.legItem}>
+          <span className={styles.legRec} /> <span className={styles.arrow}>↓</span> Receção
+        </span>
+        <span className={styles.legItem}>
+          <span className={styles.legEnt} /> <span className={styles.arrow}>↑</span> Entrega
+        </span>
       </div>
 
       {evRows.length > 0 && (
