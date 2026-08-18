@@ -141,15 +141,39 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 /* ── Projetos (agrupados por estado) ─────────────────────────── */
 function ProjetosTab({ propostas, recibos, sub, hrefSub }: any) {
   const list = propostas.filter((pr: any) => (sub === "pagos" ? pr.estado === "pago" : pr.estado !== "pago"));
-  const order = sub === "pagos" ? ["pago"] : ["em_producao", "entregue", "faturado"];
-  const groups = order
-    .map((st) => ({
-      meta: FIN_STATES.find((s) => s.value === st)!,
-      items: list
-        .filter((pr: any) => pr.estado === st)
-        .sort((a: any, b: any) => (a.projeto?.titulo ?? "").localeCompare(b.projeto?.titulo ?? "", "pt")),
-    }))
-    .filter((g) => g.items.length > 0);
+
+  type Grp = { key: string; label: string; color: string; items: any[] };
+  const byTitle = (a: any, b: any) => (a.projeto?.titulo ?? "").localeCompare(b.projeto?.titulo ?? "", "pt");
+  let groups: Grp[];
+
+  if (sub === "pagos") {
+    // Arquivo agrupado pelo trimestre da data do último recibo do projeto.
+    const m = new Map<string, { year: number; q: number; items: any[] }>();
+    for (const pr of list) {
+      const rs = recibos.filter((r: any) => r.projetoId === pr.projetoId);
+      const last = rs.length ? rs.reduce((a: any, b: any) => (a.data > b.data ? a : b)).data : null;
+      const year = last ? last.getUTCFullYear() : 0;
+      const q = last ? getQuarter(last) : 0;
+      const key = last ? `${year}-${q}` : "sem";
+      if (!m.has(key)) m.set(key, { year, q, items: [] });
+      m.get(key)!.items.push(pr);
+    }
+    groups = [...m.values()]
+      .sort((a, b) => b.year - a.year || b.q - a.q)
+      .map((g) => ({
+        key: g.year ? `${g.year}-${g.q}` : "sem",
+        label: g.year ? quarterLabel(g.year, g.q) : "Sem data",
+        color: FIN_STATE_COLOR.pago,
+        items: g.items.sort(byTitle),
+      }));
+  } else {
+    groups = (["em_producao", "entregue", "faturado"] as const)
+      .map((st): Grp => {
+        const meta = FIN_STATES.find((s) => s.value === st)!;
+        return { key: st, label: meta.label, color: meta.color, items: list.filter((pr: any) => pr.estado === st).sort(byTitle) };
+      })
+      .filter((g) => g.items.length > 0);
+  }
 
   const row = (pr: any) => {
     const val = Number(pr.valor);
@@ -193,10 +217,10 @@ function ProjetosTab({ propostas, recibos, sub, hrefSub }: any) {
         <div className="card"><div className={styles.empty}>Nenhum projeto {sub === "pagos" ? "pago" : "em curso"}</div></div>
       )}
       {groups.map((g) => (
-        <div className="card" key={g.meta.value} style={{ marginBottom: 12 }}>
+        <div className="card" key={g.key} style={{ marginBottom: 12 }}>
           <div className={styles.stateHead}>
-            <span className={styles.stateDot} style={{ background: g.meta.color }} />
-            <span style={{ color: g.meta.color }}>{g.meta.label}</span>
+            <span className={styles.stateDot} style={{ background: g.color }} />
+            <span style={{ color: g.color }}>{g.label}</span>
             <span className={styles.stateCount}>{g.items.length}</span>
           </div>
           {g.items.map(row)}
