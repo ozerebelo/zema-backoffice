@@ -19,9 +19,10 @@ function projColor(id: string): string {
 
 type Ev = { day: string; kind: "rec" | "ent"; label: string; color: string; href: string; real: boolean };
 
-export default async function CalendarioPage({ searchParams }: { searchParams: Promise<{ m?: string; view?: string }> }) {
+export default async function CalendarioPage({ searchParams }: { searchParams: Promise<{ m?: string; view?: string; kind?: string }> }) {
   const sp = await searchParams;
   const view = sp.view === "week" ? "week" : "month";
+  const kind: "rec" | "ent" | null = sp.kind === "rec" || sp.kind === "ent" ? sp.kind : null;
   const now = new Date();
   const [yy, mm] = sp.m ? sp.m.split("-").map(Number) : [now.getUTCFullYear(), now.getUTCMonth() + 1];
   const year = yy;
@@ -51,8 +52,11 @@ export default async function CalendarioPage({ searchParams }: { searchParams: P
     }
   });
 
+  // filtro por tipo (receções / entregas), se ativo
+  const evsF = kind ? evs.filter((e) => e.kind === kind) : evs;
+
   const byDay = new Map<string, Ev[]>();
-  for (const e of evs) {
+  for (const e of evsF) {
     if (!byDay.has(e.day)) byDay.set(e.day, []);
     byDay.get(e.day)!.push(e);
   }
@@ -81,11 +85,20 @@ export default async function CalendarioPage({ searchParams }: { searchParams: P
 
   const prevM = month === 0 ? `${year - 1}-12` : `${year}-${String(month).padStart(2, "0")}`;
   const nextM = month === 11 ? `${year + 1}-01` : `${year}-${String(month + 2).padStart(2, "0")}`;
-  const navHref = (m: string) => `/calendario?view=${view}&m=${m}`;
+  // href preservando vista / mês / filtro (passar null limpa esse parâmetro)
+  const qs = (over: { view?: string; m?: string | null; kind?: string | null }) => {
+    const p = new URLSearchParams();
+    p.set("view", over.view ?? view);
+    const mm = over.m !== undefined ? over.m : sp.m;
+    if (mm) p.set("m", mm);
+    const k = over.kind !== undefined ? over.kind : kind;
+    if (k) p.set("kind", k);
+    return `/calendario?${p.toString()}`;
+  };
 
   // eventos visíveis (para a lista por baixo), agrupados por projeto+label
   const visibleDays = new Set(cells.map((d) => toDateInput(d)));
-  const visEvs = evs.filter((e) => visibleDays.has(e.day));
+  const visEvs = evsF.filter((e) => visibleDays.has(e.day));
   const grouped = new Map<string, { label: string; color: string; href: string; rec?: string; ent?: string; sort: string }>();
   for (const e of visEvs) {
     const g = grouped.get(e.label) ?? { label: e.label, color: e.color, href: e.href, sort: e.day };
@@ -100,13 +113,18 @@ export default async function CalendarioPage({ searchParams }: { searchParams: P
       title="Calendário"
       sub={label}
       actions={
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <Link href={navHref(prevM)} className="btn btn-ghost btn-sm"><i className="ti ti-chevron-left" /></Link>
-          <Link href={`/calendario?view=${view}`} className="btn btn-ghost btn-sm">Hoje</Link>
-          <Link href={navHref(nextM)} className="btn btn-ghost btn-sm"><i className="ti ti-chevron-right" /></Link>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          <Link href={qs({ m: prevM })} className="btn btn-ghost btn-sm"><i className="ti ti-chevron-left" /></Link>
+          <Link href={qs({ m: null })} className="btn btn-ghost btn-sm">Hoje</Link>
+          <Link href={qs({ m: nextM })} className="btn btn-ghost btn-sm"><i className="ti ti-chevron-right" /></Link>
           <div className={styles.viewToggle}>
-            <Link href={`/calendario?view=week${sp.m ? `&m=${sp.m}` : ""}`} className={view === "week" ? styles.vActive : ""}>Semana</Link>
-            <Link href={`/calendario?view=month${sp.m ? `&m=${sp.m}` : ""}`} className={view === "month" ? styles.vActive : ""}>Mês</Link>
+            <Link href={qs({ kind: null })} className={!kind ? styles.vActive : ""}>Ambos</Link>
+            <Link href={qs({ kind: "rec" })} className={kind === "rec" ? styles.vActive : ""}>↓ Receções</Link>
+            <Link href={qs({ kind: "ent" })} className={kind === "ent" ? styles.vActive : ""}>↑ Entregas</Link>
+          </div>
+          <div className={styles.viewToggle}>
+            <Link href={qs({ view: "week" })} className={view === "week" ? styles.vActive : ""}>Semana</Link>
+            <Link href={qs({ view: "month" })} className={view === "month" ? styles.vActive : ""}>Mês</Link>
           </div>
         </div>
       }
