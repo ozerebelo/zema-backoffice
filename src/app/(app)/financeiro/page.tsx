@@ -176,7 +176,9 @@ function ProjetosTab({ propostas, recibos, sub, hrefSub }: any) {
   }
 
   const row = (pr: any) => {
-    const val = Number(pr.valor);
+    // Total real contratado do projeto (inclui horas extra pontuais). A proposta
+    // preserva o valor originalmente proposto, mas o financeiro mostra o total.
+    const val = Number(pr.projeto?.valor ?? pr.valor);
     const imp = calcImpostos(val, pr.internacional);
     const faturado = recibos.filter((r: any) => r.projetoId === pr.projetoId).reduce((s: number, r: any) => s + Number(r.valor), 0);
     const pct = val > 0 ? Math.min(100, Math.round((faturado / val) * 100)) : 0;
