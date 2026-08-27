@@ -25,7 +25,7 @@ export const EMITENTES: Emitente[] = [
     nif: "240082982",
     email: "",
     tel: "",
-    iban: "",
+    iban: "PT50 0023 0000 4563 2479 0179 4",
     notaFiscal: "IVA conforme regime aplicável. Retenção de IRS quando aplicável.",
   },
   {
@@ -36,7 +36,7 @@ export const EMITENTES: Emitente[] = [
     nif: "219807566",
     email: "",
     tel: "",
-    iban: "",
+    iban: "PT50 0023 0000 4556 4111 3809 4",
     notaFiscal: "IVA conforme regime aplicável. Retenção de IRS quando aplicável.",
   },
 ];
