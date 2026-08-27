@@ -18,11 +18,10 @@ function daysUntil(d: Date): number {
 }
 
 export default async function DashboardPage() {
-  const [projetos, recibos, leads, propostas, ivaStates, activity] = await Promise.all([
+  const [projetos, recibos, leads, ivaStates, activity] = await Promise.all([
     prisma.projeto.findMany({ include: { cliente: true, episodios: true } }),
     prisma.recibo.findMany(),
     prisma.lead.findMany(),
-    prisma.proposta.findMany(),
     prisma.ivaState.findMany(),
     // Feed de ciclo de vida (novo projeto, recibo, lead). Exclui o lixo legacy
     // da importação ("avançou para…", "Dados importados/exportados"), que dava
@@ -48,11 +47,19 @@ export default async function DashboardPage() {
 
   // Header (como o original): Leads · Produção · Faturado · Por faturar
   const leadVal = leads.reduce((s, l) => s + Number(l.valor), 0);
-  const faturadoAll = recibos.reduce((s, r) => s + Number(r.valor), 0);
   const faturadoAno = recibos
     .filter((r) => r.data.getUTCFullYear() === ano)
     .reduce((s, r) => s + Number(r.valor), 0);
-  const porFaturar = Math.max(0, propostas.reduce((s, p) => s + Number(p.valor), 0) - faturadoAll);
+  // Por faturar = por projeto, valor contratado (com extras) menos já faturado.
+  // Usa Projeto.valor — não a proposta, que fica no valor original sem extras.
+  const faturadoPorProj = new Map<string, number>();
+  for (const r of recibos) {
+    faturadoPorProj.set(r.projetoId, (faturadoPorProj.get(r.projetoId) ?? 0) + Number(r.valor));
+  }
+  const porFaturar = projetos.reduce(
+    (s, p) => s + Math.max(0, Number(p.valor) - (faturadoPorProj.get(p.id) ?? 0)),
+    0
+  );
 
   type Urg = { id: string; titulo: string; cliente: string; label: string; date: Date; dias: number };
   const urgencias: Urg[] = [];
@@ -156,7 +163,7 @@ export default async function DashboardPage() {
     { label: "Leads activos", value: String(leads.length), sub: `${fmtMoney(leadVal)} potencial`, color: "#2563EB" },
     { label: "Em produção", value: String(emProducao), sub: `de ${projetos.length} total`, color: "#D97706" },
     { label: `Faturado ${ano}`, value: fmtMoney(faturadoAno), sub: "recibos emitidos este ano", color: "#059669" },
-    { label: "Por faturar", value: fmtMoney(porFaturar), sub: "em propostas activas", color: "#7C3AED" },
+    { label: "Por faturar", value: fmtMoney(porFaturar), sub: "valor contratado sem recibo", color: "#7C3AED" },
   ];
 
   return (

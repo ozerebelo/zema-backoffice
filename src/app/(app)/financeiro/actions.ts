@@ -108,3 +108,34 @@ export async function createRecibo(fd: FormData) {
   revalidateFin();
   redirect("/financeiro?tab=recibos");
 }
+
+export async function updateRecibo(id: string, fd: FormData) {
+  await requireUser();
+  const atual = await prisma.recibo.findUnique({ where: { id }, select: { projetoId: true } });
+  if (!atual) return;
+
+  const projetoId = String(fd.get("projetoId") ?? "") || atual.projetoId;
+  const data = parseDateOnly(fd.get("data"));
+  if (!data) return;
+
+  const internacional = fd.get("internacional") === "on";
+  await prisma.recibo.update({
+    where: { id },
+    data: {
+      projetoId,
+      valor: Number(fd.get("valor")) || 0,
+      data,
+      notas: (String(fd.get("notas") ?? "").trim() || null) as string | null,
+      internacional,
+      pago: fd.get("pago") === "on",
+      taxaIRS: internacional ? 0 : Number(fd.get("taxaIRS") ?? 0.23),
+      taxaIVA: internacional ? 0 : Number(fd.get("taxaIVA") ?? 0.23),
+    },
+  });
+
+  // Se o recibo mudou de projeto, ambos precisam de re-sincronizar o estado.
+  await syncPropostaEstado(projetoId);
+  if (atual.projetoId !== projetoId) await syncPropostaEstado(atual.projetoId);
+  revalidateFin();
+  redirect("/financeiro?tab=recibos");
+}

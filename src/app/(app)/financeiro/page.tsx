@@ -291,6 +291,9 @@ function RecibosTab({ recibos, ano, ivaStates }: any) {
                     )}
                   </div>
                   <strong className={styles.projVal}>{fmtMoney(Number(r.valor))}</strong>
+                  <Link href={`/financeiro/recibo/${r.id}/editar`} className={styles.iconBtn} title="Editar">
+                    <i className="ti ti-edit" style={{ color: "var(--text-muted)" }} />
+                  </Link>
                   <form action={toggleReciboPago.bind(null, r.id)}>
                     <button type="submit" className={styles.iconBtn} title={r.pago ? "Recebido — reverter" : "Marcar recebido"} style={{ color: r.pago ? "var(--green-fg)" : "var(--text-muted)" }}>
                       <i className={`ti ${r.pago ? "ti-circle-check" : "ti-circle"}`} />

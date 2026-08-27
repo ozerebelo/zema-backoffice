@@ -14,11 +14,31 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
     where: { id },
     include: {
       contactos: true,
-      projetos: { orderBy: { titulo: "asc" } },
+      projetos: {
+        orderBy: { titulo: "asc" },
+        include: { recibos: { select: { valor: true, pago: true } } },
+      },
       leads: { orderBy: { titulo: "asc" } },
     },
   });
   if (!c) notFound();
+
+  // Resumo financeiro do cliente (agregado dos seus projetos).
+  let contratado = 0, faturado = 0, porFaturar = 0, porReceber = 0;
+  for (const p of c.projetos) {
+    const fat = p.recibos.reduce((s, r) => s + Number(r.valor), 0);
+    const naoPago = p.recibos.filter((r) => !r.pago).reduce((s, r) => s + Number(r.valor), 0);
+    contratado += Number(p.valor);
+    faturado += fat;
+    porFaturar += Math.max(0, Number(p.valor) - fat);
+    porReceber += naoPago;
+  }
+  const resumo = [
+    { label: "Contratado", value: contratado, color: "var(--ink)" },
+    { label: "Faturado", value: faturado, color: "var(--green-fg)" },
+    { label: "Por faturar", value: porFaturar, color: "#7C3AED" },
+    { label: "Por receber", value: porReceber, color: "var(--red)" },
+  ];
 
   return (
     <Page
@@ -37,6 +57,30 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
     >
       <div className={styles.layout}>
         <div>
+          {c.projetos.length > 0 && (
+            <div
+              className="card"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+                gap: 12,
+                padding: "14px 16px",
+                marginBottom: 22,
+              }}
+            >
+              {resumo.map((r) => (
+                <div key={r.label}>
+                  <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                    {r.label}
+                  </div>
+                  <div style={{ fontSize: 19, fontWeight: 700, color: r.color, marginTop: 2 }}>
+                    {fmtMoney(r.value)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className={styles.section}>Contactos</div>
           <div className="card" style={{ marginBottom: 22 }}>
             {c.contactos.length === 0 && <div className={styles.empty}>Sem contactos</div>}
