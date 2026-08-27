@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { setLeadEstado } from "@/app/(app)/comercial/actions";
@@ -24,6 +24,18 @@ export function LeadKanban({ leads }: { leads: Lead[] }) {
   const router = useRouter();
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
+  // Distinguir clique de arrasto: o cartão inteiro abre a edição, mas arrastar
+  // para mudar de coluna não deve navegar.
+  const downAt = useRef<{ x: number; y: number } | null>(null);
+  const arrastou = useRef(false);
+
+  function abrir(id: string, e: React.MouseEvent) {
+    if (arrastou.current) return; // foi arrasto
+    const d = downAt.current;
+    if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 5) return; // rato mexeu
+    if ((e.target as HTMLElement).closest("a")) return; // link tratou do clique
+    router.push(`/comercial/${id}/editar`);
+  }
 
   async function drop(estado: LeadStage) {
     setOver(null);
@@ -57,10 +69,23 @@ export function LeadKanban({ leads }: { leads: Lead[] }) {
                 key={l.id}
                 className={styles.card}
                 draggable
-                onDragStart={() => setDragId(l.id)}
+                onMouseDown={(e) => { downAt.current = { x: e.clientX, y: e.clientY }; arrastou.current = false; }}
+                onDragStart={() => { arrastou.current = true; setDragId(l.id); }}
                 onDragEnd={() => { setDragId(null); setOver(null); }}
+                onClick={(e) => abrir(l.id, e)}
+                title="Clicar para editar · arrastar para mudar de fase"
               >
-                <Link href={`/comercial/${l.id}/editar`} className={styles.cardTitle}>{l.titulo}</Link>
+                <div className={styles.cardHead}>
+                  <span className={styles.cardTitle}>{l.titulo}</span>
+                  <Link
+                    href={`/comercial/${l.id}/editar`}
+                    className={styles.cardEdit}
+                    title="Editar lead"
+                    draggable={false}
+                  >
+                    <i className="ti ti-edit" />
+                  </Link>
+                </div>
                 <div className={styles.cardCli}>{l.cliente ?? "—"}{l.tipo ? ` · ${l.tipo}` : ""}</div>
                 {/* Com linhas, mostra a decomposição (ex.: SDR + HDR), não só o total */}
                 {l.linhas.length > 0 && (

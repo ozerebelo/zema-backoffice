@@ -106,3 +106,27 @@
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
+
+/* Cabeçalho do cartão: título + atalho de edição. */
+.cardHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.cardHead .cardTitle { flex: 1; min-width: 0; }
+.cardEdit {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.card:hover .cardEdit { opacity: 1; }
+.cardEdit:hover { color: var(--ink); background: rgba(18, 40, 76, 0.08); }
+/* em toque não há hover — mostrar sempre */
+@media (hover: none) {
+  .cardEdit { opacity: 0.7; }
+}
