@@ -31,6 +31,7 @@ export function EpisodeCard({ ep }: { ep: Ep }) {
   const [busy, setBusy] = useState(false);
   const [extra, setExtra] = useState(String(ep.extra || ""));
   const [extraNota, setExtraNota] = useState(ep.extraNota ?? "");
+  const [showExtra, setShowExtra] = useState(ep.extra > 0);
 
   function saveExtra() {
     const val = Number(extra) || 0;
@@ -145,32 +146,44 @@ export function EpisodeCard({ ep }: { ep: Ep }) {
         ))}
       </div>
 
-      <div className={styles.extraRow}>
-        <label className={styles.extraVal}>
-          <span>Horas extra €</span>
-          <input
-            type="number"
-            step="0.01"
-            min={0}
-            placeholder="0"
-            value={extra}
-            disabled={pending || busy}
-            onChange={(e) => setExtra(e.target.value)}
-            onBlur={saveExtra}
-          />
-        </label>
-        <label className={styles.extraNota}>
-          <span>Descrição</span>
-          <input
-            type="text"
-            placeholder="ex.: 3h correções cliente"
-            value={extraNota}
-            disabled={pending || busy}
-            onChange={(e) => setExtraNota(e.target.value)}
-            onBlur={saveExtra}
-          />
-        </label>
-      </div>
+      {!showExtra ? (
+        <button
+          type="button"
+          className={styles.extraToggle}
+          onClick={() => setShowExtra(true)}
+          disabled={pending || busy}
+        >
+          <i className="ti ti-plus" /> Horas extra
+        </button>
+      ) : (
+        <div className={styles.extraRow}>
+          <label className={styles.extraVal}>
+            <span>Horas extra €</span>
+            <input
+              type="number"
+              step="0.01"
+              min={0}
+              placeholder="0"
+              autoFocus={ep.extra === 0}
+              value={extra}
+              disabled={pending || busy}
+              onChange={(e) => setExtra(e.target.value)}
+              onBlur={saveExtra}
+            />
+          </label>
+          <label className={styles.extraNota}>
+            <span>Descrição</span>
+            <input
+              type="text"
+              placeholder="ex.: 3h correções cliente"
+              value={extraNota}
+              disabled={pending || busy}
+              onChange={(e) => setExtraNota(e.target.value)}
+              onBlur={saveExtra}
+            />
+          </label>
+        </div>
+      )}
 
       <ReviewControl
         status={ep.reviewStatus}
