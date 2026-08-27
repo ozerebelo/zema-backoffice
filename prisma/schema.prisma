@@ -219,6 +219,7 @@ model Recibo {
   notas         String?
   internacional Boolean  @default(false)
   pago          Boolean  @default(false)
+  semRecibo     Boolean  @default(false) @map("sem_recibo") // pagamento sem documento fiscal — fora do CSV p/ contabilidade
   taxaIRS       Decimal  @default(0.23) @map("taxa_irs") @db.Decimal(4, 3)
   taxaIVA       Decimal? @default(0.23) @map("taxa_iva") @db.Decimal(4, 3)
   createdAt     DateTime @default(now()) @map("created_at")

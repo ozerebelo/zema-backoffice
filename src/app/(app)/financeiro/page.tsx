@@ -300,6 +300,7 @@ function RecibosTab({ recibos, ano, ivaStates }: any) {
                       {r.projeto?.titulo ?? "—"}
                       {r.notas ? <span className={styles.recNota}> — {r.notas}</span> : null}
                       {r.internacional ? <span className={styles.intTag}>INT</span> : null}
+                      {r.semRecibo ? <span className={styles.intTag} title="Sem documento fiscal — fora do CSV">S/ RECIBO</span> : null}
                     </div>
                     <div className={styles.projCli}>{r.projeto?.cliente?.nome ?? "—"} · {fmtShort(r.data)} · NIF {getEmitente(r.emitente).nif}</div>
                     {!r.internacional && (

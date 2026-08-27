@@ -18,6 +18,7 @@ type Initial = {
   notas?: string;
   internacional?: boolean;
   pago?: boolean;
+  semRecibo?: boolean;
 };
 
 export function ReciboForm({
@@ -153,6 +154,11 @@ export function ReciboForm({
         <label className={`${formStyles.full} ${formStyles.check}`}>
           <input type="checkbox" name="internacional" defaultChecked={initial?.internacional ?? false} />
           <span>Internacional — sem IVA nem IRS (ignora as taxas)</span>
+        </label>
+
+        <label className={`${formStyles.full} ${formStyles.check}`}>
+          <input type="checkbox" name="semRecibo" defaultChecked={initial?.semRecibo ?? false} />
+          <span>Sem recibo emitido — pagamento sem documento fiscal (fica fora do CSV para a contabilidade)</span>
         </label>
 
         <label className={`${formStyles.full} ${formStyles.check}`} style={{ background: "var(--blue-bg)" }}>

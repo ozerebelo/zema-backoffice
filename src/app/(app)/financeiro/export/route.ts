@@ -26,6 +26,7 @@ export async function GET(req: Request) {
   const rows = recibos.filter(
     (r) =>
       r.data.getUTCFullYear() === ano &&
+      !r.semRecibo && // pagamentos sem documento fiscal não vão para a contabilidade
       (!emitenteId || getEmitente(r.emitente).id === emitenteId)
   );
 

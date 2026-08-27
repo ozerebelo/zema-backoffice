@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { normalizeNif } from "@/lib/nif";
+import { normalizeNif, normalizeTexto } from "@/lib/nif";
 
 function str(v: FormDataEntryValue | null): string | null {
   const t = typeof v === "string" ? v.trim() : "";
@@ -31,12 +31,13 @@ function readContactos(fd: FormData) {
 }
 
 function readCliente(fd: FormData) {
-  const nome = str(fd.get("nome")) ?? str(fd.get("empresa")) ?? "—";
+  // Nome/empresa/morada normalizados: texto colado em CAPS fica legível.
+  const nome = normalizeTexto(fd.get("nome")) ?? normalizeTexto(fd.get("empresa")) ?? "—";
   return {
     nome,
-    empresa: str(fd.get("empresa")) ?? nome,
+    empresa: normalizeTexto(fd.get("empresa")) ?? nome,
     nif: normalizeNif(fd.get("nif")),
-    morada: str(fd.get("morada")),
+    morada: normalizeTexto(fd.get("morada")),
     email: str(fd.get("email")),
     tel: str(fd.get("tel")),
     notas: str(fd.get("notas")),

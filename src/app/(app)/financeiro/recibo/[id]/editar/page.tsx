@@ -66,6 +66,7 @@ export default async function EditarReciboPage({ params }: { params: Promise<{ i
           notas: recibo.notas ?? "",
           internacional: recibo.internacional,
           pago: recibo.pago,
+          semRecibo: recibo.semRecibo,
         }}
       />
     </Page>
