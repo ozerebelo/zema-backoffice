@@ -179,8 +179,19 @@ function ProjetosTab({ propostas, recibos, sub, hrefSub }: any) {
     // Total real contratado do projeto (inclui horas extra pontuais). A proposta
     // preserva o valor originalmente proposto, mas o financeiro mostra o total.
     const val = Number(pr.projeto?.valor ?? pr.valor);
-    const imp = calcImpostos(val, pr.internacional);
-    const faturado = recibos.filter((r: any) => r.projetoId === pr.projetoId).reduce((s: number, r: any) => s + Number(r.valor), 0);
+    const projRecibos = recibos.filter((r: any) => r.projetoId === pr.projetoId);
+    const faturado = projRecibos.reduce((s: number, r: any) => s + Number(r.valor), 0);
+    // Impostos reais dos recibos emitidos (cada um com as suas taxas). Sem recibos,
+    // projeção sobre o valor contratado com as taxas por omissão.
+    const imp = projRecibos.length
+      ? projRecibos.reduce(
+          (a: any, r: any) => {
+            const t = reciboImpostos(r);
+            return { bruto: a.bruto + t.bruto, iva: a.iva + t.iva, irs: a.irs + t.irs, liquido: a.liquido + t.liquido };
+          },
+          { bruto: 0, iva: 0, irs: 0, liquido: 0 }
+        )
+      : calcImpostos(val, pr.internacional);
     const pct = val > 0 ? Math.min(100, Math.round((faturado / val) * 100)) : 0;
     return (
       <div className={styles.projRow} key={pr.id} style={{ borderLeft: `3px solid ${FIN_STATE_COLOR[pr.estado as keyof typeof FIN_STATE_COLOR]}` }}>
