@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { normalizeNif } from "@/lib/nif";
 
 function str(v: FormDataEntryValue | null): string | null {
   const t = typeof v === "string" ? v.trim() : "";
@@ -34,7 +35,7 @@ function readCliente(fd: FormData) {
   return {
     nome,
     empresa: str(fd.get("empresa")) ?? nome,
-    nif: str(fd.get("nif")),
+    nif: normalizeNif(fd.get("nif")),
     morada: str(fd.get("morada")),
     email: str(fd.get("email")),
     tel: str(fd.get("tel")),

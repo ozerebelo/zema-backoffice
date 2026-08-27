@@ -15,12 +15,19 @@ const money = (n: number) => n.toFixed(2).replace(".", ",");
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const ano = Number(url.searchParams.get("ano")) || new Date().getUTCFullYear();
+  const emitenteId = url.searchParams.get("emitente");
 
   const recibos = await prisma.recibo.findMany({
     include: { projeto: { include: { cliente: true } } },
     orderBy: [{ data: "asc" }, { numero: "asc" }],
   });
-  const rows = recibos.filter((r) => r.data.getUTCFullYear() === ano);
+  // Um CSV por emitente (cada NIF declara separadamente). Recibos antigos sem
+  // emitente resolvem para o default, por isso nenhum fica de fora.
+  const rows = recibos.filter(
+    (r) =>
+      r.data.getUTCFullYear() === ano &&
+      (!emitenteId || getEmitente(r.emitente).id === emitenteId)
+  );
 
   const header = [
     "Nº", "Data", "Emitente", "NIF emitente", "Projeto", "Cliente", "NIF cliente",
@@ -53,10 +60,11 @@ export async function GET(req: Request) {
 
   // BOM (﻿) para o Excel reconhecer UTF-8; CRLF entre linhas.
   const csv = "﻿" + lines.join("\r\n");
+  const sufixo = emitenteId ? `-${getEmitente(emitenteId).nif}` : "";
   return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="recibos-${ano}.csv"`,
+      "Content-Disposition": `attachment; filename="recibos-${ano}${sufixo}.csv"`,
     },
   });
 }

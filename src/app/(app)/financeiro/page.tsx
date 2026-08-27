@@ -6,7 +6,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { toggleReciboPago, setIvaQuarter, deleteRecibo } from "./actions";
 import { calcImpostos, getQuarter, quarterLabel, quarterDeadlineLabel, quarterDeadlineDate } from "@/lib/tax";
 import { yearSummary, roundSummary, reciboImpostos, reciboNumero } from "@/lib/finance";
-import { getEmitente } from "@/lib/emitente";
+import { getEmitente, EMITENTES } from "@/lib/emitente";
 import { fmtMoney, fmtShort } from "@/lib/dates";
 import { FIN_STATES, FIN_STATE_COLOR } from "@/lib/domain";
 import styles from "./financeiro.module.css";
@@ -257,10 +257,17 @@ function RecibosTab({ recibos, ano, ivaStates }: any) {
 
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-        <a href={`/financeiro/export?ano=${ano}`} className="btn btn-ghost btn-sm">
-          <i className="ti ti-file-spreadsheet" /> Exportar CSV {ano}
-        </a>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+        {EMITENTES.map((em) => (
+          <a
+            key={em.id}
+            href={`/financeiro/export?ano=${ano}&emitente=${em.id}`}
+            className="btn btn-ghost btn-sm"
+            title={`Recibos de ${ano} emitidos por ${em.nome}`}
+          >
+            <i className="ti ti-file-spreadsheet" /> CSV {ano} · {em.nif}
+          </a>
+        ))}
       </div>
       {recAno.length === 0 ? (
         <div className={styles.empty}>Sem recibos em {ano}</div>
