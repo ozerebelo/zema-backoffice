@@ -279,7 +279,7 @@ export default async function DashboardPage() {
               <span className={styles.cardTitle}>Financeiro {ano}</span>
             </div>
             <div className={styles.finRow}>
-              <span>Bruto (c/ IVA)</span>
+              <span>Faturado (c/ IVA)</span>
               <strong>{fmtMoney(fin.bruto)}</strong>
             </div>
             <div className={styles.finRow}>

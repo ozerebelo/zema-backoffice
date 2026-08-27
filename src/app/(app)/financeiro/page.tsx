@@ -84,9 +84,9 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
   ];
 
   const stats = [
-    { label: `Total bruto ${ano}`, value: fmtMoney(round2(totalBruto)), sub: "faturado + por faturar", color: "#12284C" },
-    { label: "Bruto faturado", value: fmtMoney(round2(brutoFaturado)), sub: `recibos emitidos em ${ano}`, color: "#059669" },
-    { label: "Bruto por faturar", value: fmtMoney(round2(brutoPorFaturar)), sub: "sem recibo emitido", color: "#7C3AED" },
+    { label: `Total bruto ${ano} (s/ IVA)`, value: fmtMoney(round2(totalBruto)), sub: "faturado + por faturar", color: "#12284C" },
+    { label: "Bruto faturado (s/ IVA)", value: fmtMoney(round2(brutoFaturado)), sub: `recibos emitidos em ${ano}`, color: "#059669" },
+    { label: "Bruto por faturar (s/ IVA)", value: fmtMoney(round2(brutoPorFaturar)), sub: "sem recibo emitido", color: "#7C3AED" },
     { label: `IVA Q${curQ} ${curYear}`, value: fmtMoney(round2(ivaTrimestre)), sub: "trimestre corrente", color: "#DC4A36" },
     { label: `Líquido recebido ${ano}`, value: fmtMoney(round2(liquidoAno)), sub: "já recebido este ano", color: "#2563EB" },
   ];
@@ -205,7 +205,7 @@ function ProjetosTab({ propostas, recibos, sub, hrefSub }: any) {
             <div className={styles.projTax} style={{ color: "var(--green-fg)" }}>Internacional — isento</div>
           ) : (
             <div className={styles.projTax}>
-              Bruto c/IVA <b>{fmtMoney(imp.bruto)}</b> · IVA <b style={{ color: "var(--red)" }}>{fmtMoney(imp.iva)}</b> · Líquido <b style={{ color: "var(--green-fg)" }}>{fmtMoney(imp.liquido)}</b>
+              C/ IVA <b>{fmtMoney(imp.bruto)}</b> · IVA <b style={{ color: "var(--red)" }}>{fmtMoney(imp.iva)}</b> · Líquido <b style={{ color: "var(--green-fg)" }}>{fmtMoney(imp.liquido)}</b>
             </div>
           )}
           {faturado > 0 && (
@@ -354,12 +354,12 @@ function CobrarTab({ recibos }: any) {
       <div className={styles.statsGrid}>
         <div className="card" style={{ padding: "13px 15px", borderTop: "3px solid #DC4A36" }}>
           <div className={styles.statLabel}>Total por receber</div>
-          <div className={styles.statValue} style={{ color: "#DC4A36" }}>{fmtMoney(round2(totalBruto))}</div>
-          <div className={styles.statSub}>{pend.length} recibo(s) · líq. {fmtMoney(round2(totalLiq))}</div>
+          <div className={styles.statValue} style={{ color: "#DC4A36" }}>{fmtMoney(round2(totalLiq))}</div>
+          <div className={styles.statSub}>{pend.length} recibo(s) · c/ IVA {fmtMoney(round2(totalBruto))}</div>
         </div>
         {BUCKETS.map((b) => {
           const items = pend.filter((x: any) => b.test(x.dias));
-          const total = items.reduce((s: number, x: any) => s + x.imp.bruto, 0);
+          const total = items.reduce((s: number, x: any) => s + x.imp.liquido, 0);
           return (
             <div className="card" key={b.label} style={{ padding: "13px 15px", borderTop: `3px solid ${b.color}` }}>
               <div className={styles.statLabel}>{b.label}</div>
@@ -400,7 +400,7 @@ function CobrarTab({ recibos }: any) {
                 </div>
                 <div className={styles.projCli}>{r.projeto?.cliente?.nome ?? "—"} · emitido {fmtShort(r.data)}</div>
                 <div className={styles.projTax}>
-                  Bruto c/IVA <b style={{ color: "var(--ink)" }}>{fmtMoney(imp.bruto)}</b> · Líq <b style={{ color: "var(--green-fg)" }}>{fmtMoney(imp.liquido)}</b>
+                  C/ IVA <b style={{ color: "var(--ink)" }}>{fmtMoney(imp.bruto)}</b> · Líq <b style={{ color: "var(--green-fg)" }}>{fmtMoney(imp.liquido)}</b>
                 </div>
               </div>
               <strong className={styles.projVal}>{fmtMoney(Number(r.valor))}</strong>
@@ -498,7 +498,7 @@ function IvaTab({ recibos, ivaStates }: any) {
                 <thead>
                   <tr>
                     <th>Data</th><th>Projeto / cliente</th>
-                    <th className={styles.r}>Base</th><th className={styles.r}>IVA</th><th className={styles.r}>Bruto</th>
+                    <th className={styles.r}>Base</th><th className={styles.r}>IVA</th><th className={styles.r}>C/ IVA</th>
                     <th style={{ textAlign: "center" }}>Recebido</th>
                   </tr>
                 </thead>
@@ -547,7 +547,7 @@ function AnualTab({ recibos, ano }: any) {
             <th>Ano</th>
             <th className={styles.r}>Recibos</th>
             <th className={styles.r}>Base</th>
-            <th className={styles.r}>Bruto c/IVA</th>
+            <th className={styles.r}>C/ IVA</th>
             <th className={styles.r}>IVA</th>
             <th className={styles.r}>IRS</th>
             <th className={styles.r}>Líquido</th>

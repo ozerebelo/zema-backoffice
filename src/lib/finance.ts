@@ -1,5 +1,8 @@
 // Agregações financeiras partilhadas (dashboard + financeiro).
-// Bruto = valor + IVA (nacional) | valor (internacional)
+// NOTA de terminologia: o campo interno `bruto` = valor + IVA. Na UI, porém,
+// a palavra "Bruto" está reservada ao valor SEM IVA (base/tributável); este
+// campo é sempre rotulado "c/ IVA". Não usar "Bruto" para o mostrar.
+// bruto (campo) = valor + IVA (nacional) | valor (internacional)
 // Líquido = valor − IRS (nacional) | valor (internacional)
 import { calcImpostos } from "./tax";
 
