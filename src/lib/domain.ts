@@ -3,6 +3,8 @@
 import type { LeadStage, FinState } from "@prisma/client";
 
 // ─── Pipeline comercial (leads) ──────────────────────────────────
+// Fases do pipeline (colunas do kanban). "ganho"/"perdido" são terminais e
+// vivem fora do board — ver LEAD_OUTCOMES.
 export const LEAD_STAGES: { value: LeadStage; label: string }[] = [
   { value: "contacto_inicial", label: "Contacto inicial" },
   { value: "proposta_enviada", label: "Proposta enviada" },
@@ -10,9 +12,25 @@ export const LEAD_STAGES: { value: LeadStage; label: string }[] = [
   { value: "aguarda_decisao", label: "Aguarda decisão" },
 ];
 
-export const LEAD_STAGE_LABEL: Record<LeadStage, string> = Object.fromEntries(
-  LEAD_STAGES.map((s) => [s.value, s.label])
-) as Record<LeadStage, string>;
+// Estados terminais (fora do pipeline ativo).
+export const LEAD_OUTCOMES: { value: LeadStage; label: string }[] = [
+  { value: "ganho", label: "Ganho" },
+  { value: "perdido", label: "Perdido" },
+];
+
+export const LEAD_STAGE_LABEL: Record<LeadStage, string> = {
+  contacto_inicial: "Contacto inicial",
+  proposta_enviada: "Proposta enviada",
+  em_negociacao: "Em negociação",
+  aguarda_decisao: "Aguarda decisão",
+  ganho: "Ganho",
+  perdido: "Perdido",
+};
+
+/** True se o lead está num estado terminal (fora do pipeline ativo). */
+export function isLeadTerminal(estado: LeadStage): boolean {
+  return estado === "ganho" || estado === "perdido";
+}
 
 // ─── Produção (fase 0..4) ────────────────────────────────────────
 export const PROD_PHASES = [

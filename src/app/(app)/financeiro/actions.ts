@@ -82,17 +82,24 @@ export async function createRecibo(fd: FormData) {
   if (!projetoId || !data) return;
 
   const internacional = fd.get("internacional") === "on";
-  await prisma.recibo.create({
-    data: {
-      projetoId,
-      valor: Number(fd.get("valor")) || 0,
-      data,
-      notas: (String(fd.get("notas") ?? "").trim() || null) as string | null,
-      internacional,
-      pago: fd.get("pago") === "on",
-      taxaIRS: internacional ? 0 : Number(fd.get("taxaIRS") ?? 0.23),
-      taxaIVA: internacional ? 0 : Number(fd.get("taxaIVA") ?? 0.23),
-    },
+  // Número sequencial por ano de emissão ({ano}/{numero}), imutável após criado.
+  const ano = data.getUTCFullYear();
+  await prisma.$transaction(async (tx) => {
+    const last = await tx.recibo.aggregate({ where: { ano }, _max: { numero: true } });
+    await tx.recibo.create({
+      data: {
+        projetoId,
+        ano,
+        numero: (last._max.numero ?? 0) + 1,
+        valor: Number(fd.get("valor")) || 0,
+        data,
+        notas: (String(fd.get("notas") ?? "").trim() || null) as string | null,
+        internacional,
+        pago: fd.get("pago") === "on",
+        taxaIRS: internacional ? 0 : Number(fd.get("taxaIRS") ?? 0.23),
+        taxaIVA: internacional ? 0 : Number(fd.get("taxaIVA") ?? 0.23),
+      },
+    });
   });
 
   const proj = await prisma.projeto.findUnique({ where: { id: projetoId } });

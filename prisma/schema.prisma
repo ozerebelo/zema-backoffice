@@ -17,6 +17,8 @@ enum LeadStage {
   proposta_enviada // "Proposta enviada"
   em_negociacao    // "Em negociação"
   aguarda_decisao  // "Aguarda decisão"
+  ganho            // terminal — promovido a projeto
+  perdido          // terminal — lead perdido
 }
 
 enum FinState {
@@ -208,6 +210,8 @@ model Proposta {
 model Recibo {
   id            String   @id @default(uuid()) @db.Uuid
   projetoId     String   @map("projeto_id") @db.Uuid
+  ano           Int? // ano de emissão (fixo na criação) — nº sequencial: {ano}/{numero}
+  numero        Int? // sequência dentro do ano (imutável após emissão)
   valor         Decimal  @default(0) @db.Decimal(10, 2)
   data          DateTime @db.Date
   notas         String?

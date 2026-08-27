@@ -70,12 +70,34 @@ export async function deleteLead(id: string) {
 export async function setLeadEstado(id: string, estado: LeadStage) {
   await prisma.lead.update({ where: { id }, data: { estado } });
   revalidatePath("/comercial");
+  revalidatePath("/");
 }
 
-/** Promove um lead a projeto em produção (cria projeto + proposta) e remove o lead. */
+/** Marca um lead como perdido (mantém-no para métricas de conversão). */
+export async function marcarLeadPerdido(id: string) {
+  await prisma.lead.update({ where: { id }, data: { estado: "perdido" } });
+  await prisma.activity.create({
+    data: { icon: "ti-target-off", type: "grey", text: `Lead perdido` },
+  });
+  revalidatePath("/comercial");
+  revalidatePath("/");
+  redirect("/comercial");
+}
+
+/** Reabre um lead terminal (ganho/perdido) de volta ao pipeline. */
+export async function reabrirLead(id: string) {
+  await prisma.lead.update({ where: { id }, data: { estado: "aguarda_decisao" } });
+  revalidatePath("/comercial");
+  revalidatePath("/");
+  redirect(`/comercial/${id}/editar`);
+}
+
+/** Promove um lead a projeto em produção (cria projeto + proposta) e marca o
+ *  lead como "ganho" — mantém-no como histórico para a taxa de conversão. */
 export async function promoteLead(id: string) {
   const lead = await prisma.lead.findUnique({ where: { id } });
   if (!lead) return;
+  if (lead.estado === "ganho") return redirect("/comercial"); // já promovido
   const projeto = await prisma.projeto.create({
     data: {
       titulo: lead.titulo,
@@ -98,7 +120,8 @@ export async function promoteLead(id: string) {
       },
     },
   });
-  await prisma.lead.delete({ where: { id } });
+  // Mantém o lead como "ganho" (histórico + taxa de conversão), não apaga.
+  await prisma.lead.update({ where: { id }, data: { estado: "ganho" } });
   await prisma.activity.create({
     data: { icon: "ti-movie", type: "navy", text: `"${lead.titulo}" promovido a produção` },
   });

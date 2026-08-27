@@ -14,7 +14,9 @@ export default async function AppLayout({
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const leadCount = await prisma.lead.count();
+  const leadCount = await prisma.lead.count({
+    where: { estado: { notIn: ["ganho", "perdido"] } },
+  });
 
   const sections = [
     {

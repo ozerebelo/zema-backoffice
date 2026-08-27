@@ -4,7 +4,7 @@ import { Page } from "@/components/Page";
 import { quarterLabel } from "@/lib/tax";
 import { yearSummary, roundSummary } from "@/lib/finance";
 import { fmtMoney, fmtShort } from "@/lib/dates";
-import { faseLabel, LEAD_STAGE_LABEL } from "@/lib/domain";
+import { faseLabel, LEAD_STAGE_LABEL, isLeadTerminal } from "@/lib/domain";
 import { isAprovado, projReview } from "@/lib/producao";
 import styles from "./dashboard.module.css";
 
@@ -46,7 +46,8 @@ export default async function DashboardPage() {
   const ivaPendentes = ivaStates.filter((i) => i.state !== "pago");
 
   // Header (como o original): Leads · Produção · Faturado · Por faturar
-  const leadVal = leads.reduce((s, l) => s + Number(l.valor), 0);
+  const leadsAtivos = leads.filter((l) => !isLeadTerminal(l.estado));
+  const leadVal = leadsAtivos.reduce((s, l) => s + Number(l.valor), 0);
   const faturadoAno = recibos
     .filter((r) => r.data.getUTCFullYear() === ano)
     .reduce((s, r) => s + Number(r.valor), 0);
@@ -150,8 +151,8 @@ export default async function DashboardPage() {
     if (dias > 30) att.push({ icon: "ti-cash", color: "#D97706", title: `Recibo de ${fmtMoney(Number(r.valor))}`, sub: `${projTitulo.get(r.projetoId) ?? "—"} · por receber`, badge: `há ${dias}d`, href: "/financeiro?tab=cobrar", sort: 1000 + dias });
   }
 
-  // 4) leads parados (>14d sem mexer)
-  for (const l of leads) {
+  // 4) leads parados (>14d sem mexer) — só pipeline ativo
+  for (const l of leadsAtivos) {
     const dias = -daysUntil(l.updatedAt);
     if (dias > 14) att.push({ icon: "ti-target-arrow", color: "#2563EB", title: l.titulo, sub: `Lead · ${LEAD_STAGE_LABEL[l.estado]}`, badge: `parado ${dias}d`, href: "/comercial", sort: 400 + dias });
   }
@@ -160,7 +161,7 @@ export default async function DashboardPage() {
   const topAtt = att.slice(0, 7);
 
   const stats = [
-    { label: "Leads activos", value: String(leads.length), sub: `${fmtMoney(leadVal)} potencial`, color: "#2563EB" },
+    { label: "Leads activos", value: String(leadsAtivos.length), sub: `${fmtMoney(leadVal)} potencial`, color: "#2563EB" },
     { label: "Em produção", value: String(emProducao), sub: `de ${projetos.length} total`, color: "#D97706" },
     { label: `Faturado ${ano}`, value: fmtMoney(faturadoAno), sub: "recibos emitidos este ano", color: "#059669" },
     { label: "Por faturar", value: fmtMoney(porFaturar), sub: "valor contratado sem recibo", color: "#7C3AED" },

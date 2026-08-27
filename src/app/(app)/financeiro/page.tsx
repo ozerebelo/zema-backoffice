@@ -5,7 +5,7 @@ import { PropostaEstadoSelect } from "@/components/PropostaEstadoSelect";
 import { DeleteButton } from "@/components/DeleteButton";
 import { toggleReciboPago, setIvaQuarter, deleteRecibo } from "./actions";
 import { calcImpostos, getQuarter, quarterLabel, quarterDeadlineLabel, quarterDeadlineDate } from "@/lib/tax";
-import { yearSummary, roundSummary, reciboImpostos } from "@/lib/finance";
+import { yearSummary, roundSummary, reciboImpostos, reciboNumero } from "@/lib/finance";
 import { fmtMoney, fmtShort } from "@/lib/dates";
 import { FIN_STATES, FIN_STATE_COLOR } from "@/lib/domain";
 import styles from "./financeiro.module.css";
@@ -254,9 +254,16 @@ function RecibosTab({ recibos, ano, ivaStates }: any) {
   }
   const quarters = [...groups.keys()].sort((a, b) => b - a);
 
-  if (recAno.length === 0) return <div className={styles.empty}>Sem recibos em {ano}</div>;
-
   return (
+    <>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+        <a href={`/financeiro/export?ano=${ano}`} className="btn btn-ghost btn-sm">
+          <i className="ti ti-file-spreadsheet" /> Exportar CSV {ano}
+        </a>
+      </div>
+      {recAno.length === 0 ? (
+        <div className={styles.empty}>Sem recibos em {ano}</div>
+      ) : (
     <div className="card">
       {quarters.map((q) => {
         const recs = groups.get(q)!;
@@ -279,6 +286,9 @@ function RecibosTab({ recibos, ano, ivaStates }: any) {
                 <div className={styles.recRow} key={r.id}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className={styles.projTitle}>
+                      <span style={{ color: "var(--text-muted)", fontWeight: 600, marginRight: 6 }}>
+                        {reciboNumero(r)}
+                      </span>
                       {r.projeto?.titulo ?? "—"}
                       {r.notas ? <span className={styles.recNota}> — {r.notas}</span> : null}
                       {r.internacional ? <span className={styles.intTag}>INT</span> : null}
@@ -291,6 +301,9 @@ function RecibosTab({ recibos, ano, ivaStates }: any) {
                     )}
                   </div>
                   <strong className={styles.projVal}>{fmtMoney(Number(r.valor))}</strong>
+                  <a href={`/recibo/${r.id}/imprimir`} target="_blank" className={styles.iconBtn} title="Recibo em PDF">
+                    <i className="ti ti-file-type-pdf" style={{ color: "var(--text-muted)" }} />
+                  </a>
                   <Link href={`/financeiro/recibo/${r.id}/editar`} className={styles.iconBtn} title="Editar">
                     <i className="ti ti-edit" style={{ color: "var(--text-muted)" }} />
                   </Link>
@@ -314,6 +327,8 @@ function RecibosTab({ recibos, ano, ivaStates }: any) {
         );
       })}
     </div>
+      )}
+    </>
   );
 }
 

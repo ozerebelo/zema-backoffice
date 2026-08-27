@@ -15,6 +15,12 @@ export type ReciboLike = {
   data: Date;
 };
 
+/** Número fiscal do recibo no formato {ano}/{NNN} (ex.: 2026/014). */
+export function reciboNumero(r: { ano: number | null; numero: number | null }): string {
+  if (r.ano == null || r.numero == null) return "—";
+  return `${r.ano}/${String(r.numero).padStart(3, "0")}`;
+}
+
 export function reciboImpostos(r: ReciboLike) {
   return calcImpostos(
     Number(r.valor),
