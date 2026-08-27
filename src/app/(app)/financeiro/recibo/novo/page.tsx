@@ -12,9 +12,17 @@ export default async function NovoReciboPage({
   searchParams: Promise<{ projeto?: string }>;
 }) {
   const sp = await searchParams;
-  const projetos = await prisma.projeto.findMany({
-    include: { cliente: true },
+  const todos = await prisma.projeto.findMany({
+    include: { cliente: true, recibos: { select: { valor: true } } },
     orderBy: { titulo: "asc" },
+  });
+  // Só projetos por faturar (sem recibo ou parcialmente faturados). Os já
+  // totalmente faturados saem da lista — exceto o pré-selecionado por link.
+  const cents = (n: unknown) => Math.round(Number(n) * 100);
+  const projetos = todos.filter((p) => {
+    if (p.id === sp.projeto) return true;
+    const faturado = p.recibos.reduce((s, r) => s + cents(r.valor), 0);
+    return faturado < cents(p.valor);
   });
   const hoje = new Date().toISOString().slice(0, 10);
 
