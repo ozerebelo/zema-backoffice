@@ -74,3 +74,35 @@
   padding: 8px 0;
   opacity: 0.4;
 }
+
+/* Decomposição do orçamento no cartão (ex.: base SDR + extra HDR). */
+.linhas {
+  margin: 6px 0 2px;
+  padding: 6px 0 0;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.linha {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.linhaOff {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+.linhaDesc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.linhaVal {
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}

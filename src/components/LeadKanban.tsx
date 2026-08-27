@@ -15,6 +15,7 @@ type Lead = {
   valor: number;
   estado: LeadStage;
   tipo: string | null;
+  linhas: { descricao: string; valor: number; incluida: boolean }[];
 };
 
 const fmt = (v: number) => "€" + v.toLocaleString("pt-PT");
@@ -61,6 +62,19 @@ export function LeadKanban({ leads }: { leads: Lead[] }) {
               >
                 <Link href={`/comercial/${l.id}/editar`} className={styles.cardTitle}>{l.titulo}</Link>
                 <div className={styles.cardCli}>{l.cliente ?? "—"}{l.tipo ? ` · ${l.tipo}` : ""}</div>
+                {/* Com linhas, mostra a decomposição (ex.: SDR + HDR), não só o total */}
+                {l.linhas.length > 0 && (
+                  <div className={styles.linhas}>
+                    {l.linhas.map((ln, k) => (
+                      <div key={k} className={`${styles.linha} ${ln.incluida ? "" : styles.linhaOff}`}>
+                        <span className={styles.linhaDesc}>
+                          {ln.incluida ? "" : "✕ "}{ln.descricao}
+                        </span>
+                        <span className={styles.linhaVal}>{fmt(ln.valor)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className={styles.cardVal}>{fmt(l.valor)}</div>
               </div>
             ))}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { TIPOS, FORMATOS, PROD_PHASES } from "@/lib/domain";
+import { OrcamentoLinhas, totalLinha, type Linha } from "./OrcamentoLinhas";
 import styles from "./form.module.css";
 
 type Cliente = { id: string; nome: string };
@@ -16,6 +17,7 @@ type Initial = {
   eps?: number;
   valEp?: number | null;
   valor?: number;
+  linhas?: Linha[];
   fase?: number;
   recepcao?: string;
   prazo?: string;
@@ -48,6 +50,10 @@ export function ProjetoForm({
   const [eps, setEps] = useState(initial?.eps ?? 0);
   const [valEp, setValEp] = useState(initial?.valEp ?? 0);
   const [valor, setValor] = useState(initial?.valor ?? 0);
+  const [linhas, setLinhas] = useState<Linha[]>(initial?.linhas ?? []);
+  // Com linhas, o valor do projeto é a soma das incluídas.
+  const totalLinhas =
+    Math.round(linhas.filter((l) => l.incluida).reduce((s, l) => s + totalLinha(l, eps), 0) * 100) / 100;
 
   const computedTotal = Math.round(eps * valEp * 100) / 100;
 
@@ -113,7 +119,8 @@ export function ProjetoForm({
           />
         </label>
 
-        {/* Valor: por episódio ou total */}
+        {/* Valor: por episódio ou total (escondido quando há linhas) */}
+        {linhas.length === 0 && (
         <div className={styles.full}>
           <div className={styles.valueHead}>
             <span>Valor</span>
@@ -162,6 +169,16 @@ export function ProjetoForm({
             </div>
           )}
         </div>
+        )}
+
+        {linhas.length > 0 && (
+          <>
+            <input type="hidden" name="valueMode" value="linhas" />
+            <input type="hidden" name="valor" value={totalLinhas} />
+          </>
+        )}
+
+        <OrcamentoLinhas eps={eps} linhas={linhas} setLinhas={setLinhas} />
 
         <label>
           <span>Receção de material</span>

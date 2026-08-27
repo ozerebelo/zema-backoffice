@@ -94,6 +94,7 @@ model Lead {
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
   cliente Cliente? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  linhas  OrcamentoLinha[]
 
   @@index([clienteId])
   @@index([estado])
@@ -133,6 +134,7 @@ model Projeto {
   history   ProjetoHistory[]
   propostas Proposta[]
   recibos   Recibo[]
+  linhas    OrcamentoLinha[]
 
   @@index([clienteId])
   @@index([fase])
@@ -160,6 +162,28 @@ model EpisodeSchedule {
   @@unique([projetoId, idx])
   @@index([projetoId])
   @@map("episode_schedule")
+}
+
+// Linhas de orçamento de uma proposta (ex.: "Base SDR" + "Extra HDR").
+// Pertencem a um lead (fase comercial) ou a um projeto (herdadas ao promover).
+// O valor do lead/projeto é a soma das linhas INCLUÍDAS; sem linhas, mantém-se
+// o valor único de sempre.
+model OrcamentoLinha {
+  id        String   @id @default(uuid()) @db.Uuid
+  leadId    String?  @map("lead_id") @db.Uuid
+  projetoId String?  @map("projeto_id") @db.Uuid
+  idx       Int // ordem de apresentação
+  descricao String
+  valEp     Decimal? @map("val_ep") @db.Decimal(10, 2) // preenchido = valor por episódio
+  valor     Decimal  @default(0) @db.Decimal(10, 2) // total da linha (valEp × eps quando valEp)
+  incluida  Boolean  @default(true) // aceite pelo cliente — só as incluídas somam
+
+  lead    Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  projeto Projeto? @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([projetoId])
+  @@map("orcamento_linha")
 }
 
 model Sessao {

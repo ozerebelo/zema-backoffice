@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { TIPOS, FORMATOS, LEAD_STAGES } from "@/lib/domain";
+import { OrcamentoLinhas, totalLinha, type Linha } from "./OrcamentoLinhas";
 import styles from "./form.module.css";
 
 type Cliente = { id: string; nome: string };
@@ -18,6 +19,7 @@ type Initial = {
   estado?: string;
   internacional?: boolean;
   notas?: string | null;
+  linhas?: Linha[];
 };
 
 const fmt = (v: number) =>
@@ -42,7 +44,11 @@ export function LeadForm({
   const [eps, setEps] = useState(initial?.eps ?? 0);
   const [valEp, setValEp] = useState(initial?.valEp ?? 0);
   const [valor, setValor] = useState(initial?.valor ?? 0);
+  const [linhas, setLinhas] = useState<Linha[]>(initial?.linhas ?? []);
   const computedTotal = Math.round(eps * valEp * 100) / 100;
+  // Com linhas, o valor da proposta é a soma das incluídas.
+  const totalLinhas =
+    Math.round(linhas.filter((l) => l.incluida).reduce((s, l) => s + totalLinha(l, eps), 0) * 100) / 100;
 
   return (
     <form action={action} className={styles.form}>
@@ -97,27 +103,39 @@ export function LeadForm({
             onChange={(e) => setEps(Math.max(0, Math.trunc(Number(e.target.value) || 0)))} />
         </label>
 
-        <div className={styles.full}>
-          <div className={styles.valueHead}>
-            <span>Valor</span>
-            <div className={styles.toggle}>
-              <button type="button" className={mode === "total" ? styles.toggleActive : ""} onClick={() => setMode("total")}>Total</button>
-              <button type="button" className={mode === "perEp" ? styles.toggleActive : ""} onClick={() => setMode("perEp")}>Por episódio</button>
+        {linhas.length === 0 && (
+          <div className={styles.full}>
+            <div className={styles.valueHead}>
+              <span>Valor</span>
+              <div className={styles.toggle}>
+                <button type="button" className={mode === "total" ? styles.toggleActive : ""} onClick={() => setMode("total")}>Total</button>
+                <button type="button" className={mode === "perEp" ? styles.toggleActive : ""} onClick={() => setMode("perEp")}>Por episódio</button>
+              </div>
             </div>
+            <input type="hidden" name="valueMode" value={mode} />
+            {mode === "total" ? (
+              <input name="valor" type="number" step="0.01" min={0} value={valor}
+                onChange={(e) => setValor(Number(e.target.value) || 0)} placeholder="Ex: 600" />
+            ) : (
+              <div className={styles.perEpRow}>
+                <input name="valEp" type="number" step="0.01" min={0} value={valEp}
+                  onChange={(e) => setValEp(Number(e.target.value) || 0)} placeholder="€ / episódio" />
+                <span className={styles.times}>× {eps} eps =</span>
+                <strong className={styles.total}>{fmt(computedTotal)}</strong>
+              </div>
+            )}
           </div>
-          <input type="hidden" name="valueMode" value={mode} />
-          {mode === "total" ? (
-            <input name="valor" type="number" step="0.01" min={0} value={valor}
-              onChange={(e) => setValor(Number(e.target.value) || 0)} placeholder="Ex: 600" />
-          ) : (
-            <div className={styles.perEpRow}>
-              <input name="valEp" type="number" step="0.01" min={0} value={valEp}
-                onChange={(e) => setValEp(Number(e.target.value) || 0)} placeholder="€ / episódio" />
-              <span className={styles.times}>× {eps} eps =</span>
-              <strong className={styles.total}>{fmt(computedTotal)}</strong>
-            </div>
-          )}
-        </div>
+        )}
+
+        {/* Com linhas, o valor vem da soma delas (valueMode "linhas"). */}
+        {linhas.length > 0 && (
+          <>
+            <input type="hidden" name="valueMode" value="linhas" />
+            <input type="hidden" name="valor" value={totalLinhas} />
+          </>
+        )}
+
+        <OrcamentoLinhas eps={eps} linhas={linhas} setLinhas={setLinhas} />
 
         <label className={styles.full}>
           <span>Notas</span>

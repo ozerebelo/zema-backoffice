@@ -9,7 +9,9 @@ import styles from "./comercial.module.css";
 export const dynamic = "force-dynamic";
 
 export default async function ComercialPage() {
-  const leads = await prisma.lead.findMany({ include: { cliente: true } });
+  const leads = await prisma.lead.findMany({
+    include: { cliente: true, linhas: { orderBy: { idx: "asc" } } },
+  });
 
   const ativos = leads.filter((l) => !isLeadTerminal(l.estado));
   const ganhos = leads.filter((l) => l.estado === "ganho");
@@ -24,6 +26,11 @@ export default async function ComercialPage() {
     valor: Number(l.valor),
     estado: l.estado,
     tipo: l.tipo,
+    linhas: l.linhas.map((x) => ({
+      descricao: x.descricao,
+      valor: Number(x.valor),
+      incluida: x.incluida,
+    })),
   }));
 
   const stats = [

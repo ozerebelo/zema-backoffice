@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { parseDateOnly } from "@/lib/dates";
+import { readLinhas, totalLinhas } from "@/lib/orcamento";
 
 const COLORS = [
   "#2563EB", "#DC4A36", "#059669", "#D97706", "#7C3AED",
@@ -23,15 +24,20 @@ function str(v: FormDataEntryValue | null): string | null {
 function readFields(fd: FormData) {
   const eps = Math.max(0, Math.trunc(num(fd.get("eps"))));
   const valueMode = String(fd.get("valueMode") ?? "total");
+  const linhas = readLinhas(fd, eps);
   let valor: number;
   let valEp: number | null = null;
-  if (valueMode === "perEp") {
+  if (linhas.length > 0) {
+    // valor-base derivado das linhas incluídas
+    valor = totalLinhas(linhas, eps);
+  } else if (valueMode === "perEp") {
     valEp = num(fd.get("valEp"));
     valor = Math.round(valEp * eps * 100) / 100;
   } else {
     valor = num(fd.get("valor"));
   }
   return {
+    linhas,
     titulo: str(fd.get("titulo")) ?? "—",
     clienteId: str(fd.get("clienteId")),
     tipo: str(fd.get("tipo")),
@@ -55,7 +61,7 @@ export async function createProjeto(fd: FormData) {
   const f = readFields(fd);
   if (!f.titulo) return;
 
-  const { clienteId, ...rest } = f;
+  const { clienteId, linhas, ...rest } = f;
   const projeto = await prisma.projeto.create({
     data: {
       ...rest,
@@ -67,6 +73,7 @@ export async function createProjeto(fd: FormData) {
       propostas: {
         create: { valor: f.valor, estado: "em_producao", internacional: f.internacional },
       },
+      linhas: linhas.length ? { create: linhas } : undefined,
     },
   });
 
@@ -109,6 +116,9 @@ export async function updateProjeto(id: string, fd: FormData) {
     .reduce((s, e) => s + Number(e.extra), 0);
   const valor = Math.round((f.valor + extras) * 100) / 100;
 
+  // Linhas de orçamento substituídas por inteiro (a UI envia o conjunto).
+  await prisma.orcamentoLinha.deleteMany({ where: { projetoId: id } });
+
   await prisma.projeto.update({
     where: { id },
     data: {
@@ -128,6 +138,7 @@ export async function updateProjeto(id: string, fd: FormData) {
       internacional: f.internacional,
       notas: f.notas,
       ...(f.color ? { color: f.color } : {}),
+      ...(f.linhas.length ? { linhas: { create: f.linhas } } : {}),
     },
   });
 

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import type { LeadStage } from "@prisma/client";
+import { readLinhas, totalLinhas } from "@/lib/orcamento";
 
 function num(v: FormDataEntryValue | null): number {
   const n = Number(v);
@@ -18,15 +19,20 @@ function str(v: FormDataEntryValue | null): string | null {
 function readLead(fd: FormData) {
   const eps = Math.max(0, Math.trunc(num(fd.get("eps"))));
   const valueMode = String(fd.get("valueMode") ?? "total");
+  const linhas = readLinhas(fd, eps);
   let valor: number;
   let valEp: number | null = null;
-  if (valueMode === "perEp") {
+  if (linhas.length > 0) {
+    // valor derivado das linhas incluídas
+    valor = totalLinhas(linhas, eps);
+  } else if (valueMode === "perEp") {
     valEp = num(fd.get("valEp"));
     valor = Math.round(valEp * eps * 100) / 100;
   } else {
     valor = num(fd.get("valor"));
   }
   return {
+    linhas,
     titulo: str(fd.get("titulo")) ?? "—",
     clienteId: str(fd.get("clienteId")),
     tipo: str(fd.get("tipo")),
@@ -45,17 +51,28 @@ function readLead(fd: FormData) {
 export async function createLead(fd: FormData) {
   const f = readLead(fd);
   if (!f.titulo) return;
-  const { clienteId, ...rest } = f;
+  const { clienteId, linhas, ...rest } = f;
   await prisma.lead.create({
-    data: { ...rest, cliente: clienteId ? { connect: { id: clienteId } } : undefined },
+    data: {
+      ...rest,
+      cliente: clienteId ? { connect: { id: clienteId } } : undefined,
+      linhas: linhas.length ? { create: linhas } : undefined,
+    },
   });
   revalidatePath("/comercial");
   redirect("/comercial");
 }
 
 export async function updateLead(id: string, fd: FormData) {
-  const f = readLead(fd);
-  await prisma.lead.update({ where: { id }, data: f });
+  const { linhas, ...f } = readLead(fd);
+  // As linhas são substituídas por inteiro (a UI envia sempre o conjunto).
+  await prisma.$transaction([
+    prisma.orcamentoLinha.deleteMany({ where: { leadId: id } }),
+    prisma.lead.update({
+      where: { id },
+      data: { ...f, linhas: linhas.length ? { create: linhas } : undefined },
+    }),
+  ]);
   revalidatePath("/comercial");
   redirect("/comercial");
 }
@@ -95,7 +112,10 @@ export async function reabrirLead(id: string) {
 /** Promove um lead a projeto em produção (cria projeto + proposta) e marca o
  *  lead como "ganho" — mantém-no como histórico para a taxa de conversão. */
 export async function promoteLead(id: string) {
-  const lead = await prisma.lead.findUnique({ where: { id } });
+  const lead = await prisma.lead.findUnique({
+    where: { id },
+    include: { linhas: { orderBy: { idx: "asc" } } },
+  });
   if (!lead) return;
   if (lead.estado === "ganho") return redirect("/comercial"); // já promovido
   const projeto = await prisma.projeto.create({
@@ -118,6 +138,18 @@ export async function promoteLead(id: string) {
       propostas: {
         create: { valor: lead.valor, estado: "em_producao", internacional: lead.internacional },
       },
+      // as linhas de orçamento acompanham o lead para o projeto
+      linhas: lead.linhas.length
+        ? {
+            create: lead.linhas.map((l) => ({
+              idx: l.idx,
+              descricao: l.descricao,
+              valEp: l.valEp,
+              valor: l.valor,
+              incluida: l.incluida,
+            })),
+          }
+        : undefined,
     },
   });
   // Mantém o lead como "ganho" (histórico + taxa de conversão), não apaga.

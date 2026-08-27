@@ -16,7 +16,7 @@ export default async function EditarProjetoPage({
 }) {
   const { id } = await params;
   const [p, clientes] = await Promise.all([
-    prisma.projeto.findUnique({ where: { id } }),
+    prisma.projeto.findUnique({ where: { id }, include: { linhas: { orderBy: { idx: "asc" } } } }),
     prisma.cliente.findMany({ select: { id: true, nome: true }, orderBy: { nome: "asc" } }),
   ]);
   if (!p) notFound();
@@ -55,6 +55,12 @@ export default async function EditarProjetoPage({
           internacional: p.internacional,
           notas: p.notas,
           color: p.color,
+          linhas: p.linhas.map((x) => ({
+            descricao: x.descricao,
+            valEp: x.valEp == null ? null : Number(x.valEp),
+            valor: Number(x.valor),
+            incluida: x.incluida,
+          })),
         }}
       />
 

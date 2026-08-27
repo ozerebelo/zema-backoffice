@@ -21,6 +21,7 @@ export default async function ProjetoDetailPage({
     include: {
       cliente: true,
       episodios: { orderBy: { idx: "asc" } },
+      linhas: { orderBy: { idx: "asc" } },
       sessoes: { orderBy: { data: "desc" } },
       history: { orderBy: { ts: "desc" }, take: 12 },
       recibos: { orderBy: { data: "desc" } },
@@ -33,6 +34,10 @@ export default async function ProjetoDetailPage({
   p.episodios.forEach((e) => (epCounts[Math.min(e.fase, 4)] += 1));
   const entregues = p.episodios.filter((e) => e.entregaReal).length;
   const extrasTotal = p.episodios.reduce((s, e) => s + Number(e.extra), 0);
+
+  const orcamento = p.linhas
+    .map((l) => `${l.incluida ? "" : "✕ "}${l.descricao} ${fmtMoney(Number(l.valor))}`)
+    .join(" · ");
 
   const facts: { k: string; v: string }[] = [
     { k: "Cliente", v: p.cliente?.nome ?? "—" },
@@ -49,6 +54,7 @@ export default async function ProjetoDetailPage({
           : fmtMoney(Number(p.valor)),
     },
     { k: "Episódios", v: p.eps ? String(p.eps) : "—" },
+    ...(orcamento ? [{ k: "Orçamento", v: orcamento }] : []),
   ];
 
   return (

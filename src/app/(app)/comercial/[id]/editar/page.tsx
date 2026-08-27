@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function EditarLeadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [l, clientes] = await Promise.all([
-    prisma.lead.findUnique({ where: { id } }),
+    prisma.lead.findUnique({ where: { id }, include: { linhas: { orderBy: { idx: "asc" } } } }),
     prisma.cliente.findMany({ select: { id: true, nome: true }, orderBy: { nome: "asc" } }),
   ]);
   if (!l) notFound();
@@ -77,6 +77,12 @@ export default async function EditarLeadPage({ params }: { params: Promise<{ id:
           estado: l.estado,
           internacional: l.internacional,
           notas: l.notas,
+          linhas: l.linhas.map((x) => ({
+            descricao: x.descricao,
+            valEp: x.valEp == null ? null : Number(x.valEp),
+            valor: Number(x.valor),
+            incluida: x.incluida,
+          })),
         }}
       />
 
