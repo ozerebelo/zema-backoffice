@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { reciboImpostos, reciboNumero } from "@/lib/finance";
+import { getEmitente } from "@/lib/emitente";
 
 export const dynamic = "force-dynamic";
 
@@ -22,15 +23,19 @@ export async function GET(req: Request) {
   const rows = recibos.filter((r) => r.data.getUTCFullYear() === ano);
 
   const header = [
-    "Nº", "Data", "Projeto", "Cliente", "Base", "IVA", "IRS", "Líquido", "C/ IVA", "Pago", "Internacional",
+    "Nº", "Data", "Emitente", "NIF emitente", "Projeto", "Cliente",
+    "Base", "IVA", "IRS", "Líquido", "C/ IVA", "Pago", "Internacional",
   ];
   const lines = [header.join(";")];
   for (const r of rows) {
     const t = reciboImpostos(r);
+    const em = getEmitente(r.emitente);
     lines.push(
       [
         reciboNumero(r),
         r.data.toISOString().slice(0, 10),
+        em.nome,
+        em.nif,
         r.projeto?.titulo ?? "—",
         r.projeto?.cliente?.nome ?? "—",
         money(Number(r.valor)),

@@ -212,6 +212,7 @@ model Recibo {
   projetoId     String   @map("projeto_id") @db.Uuid
   ano           Int? // ano de emissão (fixo na criação) — nº sequencial: {ano}/{numero}
   numero        Int? // sequência dentro do ano (imutável após emissão)
+  emitente      String? // chave do emitente (src/lib/emitente.ts); null = default
   valor         Decimal  @default(0) @db.Decimal(10, 2)
   data          DateTime @db.Date
   notas         String?

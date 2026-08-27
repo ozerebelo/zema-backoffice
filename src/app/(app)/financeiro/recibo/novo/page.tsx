@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { Page } from "@/components/Page";
 import { ReciboForm, type ProjetoOpt } from "@/components/ReciboForm";
 import { createRecibo } from "../../actions";
+import { EMITENTES } from "@/lib/emitente";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,7 @@ export default async function NovoReciboPage({
       <ReciboForm
         action={createRecibo}
         projetos={projetos}
+        emitentes={EMITENTES.map((e) => ({ id: e.id, label: `${e.nome} · ${e.nif}` }))}
         initial={{ projetoId: sp.projeto }}
         hoje={hoje}
       />

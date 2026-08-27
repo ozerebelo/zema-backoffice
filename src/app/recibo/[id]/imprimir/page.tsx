@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { reciboImpostos, reciboNumero } from "@/lib/finance";
 import { fmtMoney } from "@/lib/dates";
-import { EMITENTE } from "@/lib/emitente";
+import { getEmitente, LOGO_SRC } from "@/lib/emitente";
 import { PrintButton } from "@/components/PrintButton";
 import styles from "./recibo.module.css";
 
@@ -22,6 +22,7 @@ export default async function ReciboImprimirPage({ params }: { params: Promise<{
   const imp = reciboImpostos(r);
   const num = reciboNumero(r);
   const cliente = r.projeto?.cliente;
+  const emitente = getEmitente(r.emitente);
 
   return (
     <div className={styles.wrap}>
@@ -32,16 +33,25 @@ export default async function ReciboImprimirPage({ params }: { params: Promise<{
 
       <div className={styles.sheet}>
         <header className={styles.head}>
-          <div>
-            <div className={styles.brand}>{EMITENTE.nome}</div>
-            <div className={styles.brandSub}>{EMITENTE.atividade}</div>
-          </div>
+          {LOGO_SRC ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={LOGO_SRC} alt={emitente.nome} className={styles.logo} />
+          ) : (
+            <svg className={styles.logo} viewBox="0 0 150 78" role="img" aria-label="zema studios" xmlns="http://www.w3.org/2000/svg">
+              <text x="0" y="34" fill="#12284C" fontFamily="var(--font-dm-sans), sans-serif" fontWeight="600" fontSize="38" letterSpacing="-1">zema</text>
+              <text x="0" y="74" fill="#12284C" fontFamily="var(--font-dm-sans), sans-serif" fontWeight="600" fontSize="38" letterSpacing="-1">
+                stud<tspan fill="#E1573F">i</tspan>os
+              </text>
+            </svg>
+          )}
           <div className={styles.emit}>
-            {EMITENTE.morada}
+            <b>{emitente.nome}</b>
             <br />
-            NIF <b>{EMITENTE.nif}</b>
+            {emitente.morada}
             <br />
-            {EMITENTE.email} · {EMITENTE.tel}
+            NIF <b>{emitente.nif}</b>
+            <br />
+            {emitente.email} · {emitente.tel}
           </div>
         </header>
 
@@ -114,9 +124,9 @@ export default async function ReciboImprimirPage({ params }: { params: Promise<{
         <div className={styles.note}>
           {r.internacional
             ? "Operação internacional — reverse charge (sem IVA nem IRS)."
-            : EMITENTE.notaFiscal}
+            : emitente.notaFiscal}
           <br />
-          Pagamento por transferência — IBAN {EMITENTE.iban}.
+          Pagamento por transferência — IBAN {emitente.iban}.
         </div>
       </div>
     </div>

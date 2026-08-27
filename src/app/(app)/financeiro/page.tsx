@@ -6,6 +6,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { toggleReciboPago, setIvaQuarter, deleteRecibo } from "./actions";
 import { calcImpostos, getQuarter, quarterLabel, quarterDeadlineLabel, quarterDeadlineDate } from "@/lib/tax";
 import { yearSummary, roundSummary, reciboImpostos, reciboNumero } from "@/lib/finance";
+import { getEmitente } from "@/lib/emitente";
 import { fmtMoney, fmtShort } from "@/lib/dates";
 import { FIN_STATES, FIN_STATE_COLOR } from "@/lib/domain";
 import styles from "./financeiro.module.css";
@@ -293,7 +294,7 @@ function RecibosTab({ recibos, ano, ivaStates }: any) {
                       {r.notas ? <span className={styles.recNota}> — {r.notas}</span> : null}
                       {r.internacional ? <span className={styles.intTag}>INT</span> : null}
                     </div>
-                    <div className={styles.projCli}>{r.projeto?.cliente?.nome ?? "—"} · {fmtShort(r.data)}</div>
+                    <div className={styles.projCli}>{r.projeto?.cliente?.nome ?? "—"} · {fmtShort(r.data)} · NIF {getEmitente(r.emitente).nif}</div>
                     {!r.internacional && (
                       <div className={styles.projTax}>
                         IVA <b style={{ color: "var(--red)" }}>{fmtMoney(imp.iva)}</b> · IRS <b style={{ color: "var(--amber-fg)" }}>{fmtMoney(imp.irs)}</b> · Líq <b style={{ color: "var(--green-fg)" }}>{fmtMoney(imp.liquido)}</b>

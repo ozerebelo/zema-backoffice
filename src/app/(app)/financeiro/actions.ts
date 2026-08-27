@@ -91,6 +91,7 @@ export async function createRecibo(fd: FormData) {
         projetoId,
         ano,
         numero: (last._max.numero ?? 0) + 1,
+        emitente: String(fd.get("emitente") ?? "").trim() || null,
         valor: Number(fd.get("valor")) || 0,
         data,
         notas: (String(fd.get("notas") ?? "").trim() || null) as string | null,
@@ -130,6 +131,7 @@ export async function updateRecibo(id: string, fd: FormData) {
     where: { id },
     data: {
       projetoId,
+      emitente: String(fd.get("emitente") ?? "").trim() || null,
       valor: Number(fd.get("valor")) || 0,
       data,
       notas: (String(fd.get("notas") ?? "").trim() || null) as string | null,

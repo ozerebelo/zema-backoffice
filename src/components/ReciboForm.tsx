@@ -6,8 +6,11 @@ import formStyles from "./form.module.css";
 
 export type ProjetoOpt = { id: string; label: string; restante: number };
 
+export type EmitenteOpt = { id: string; label: string };
+
 type Initial = {
   projetoId?: string;
+  emitente?: string;
   valor?: number;
   data?: string;
   taxaIRS?: number;
@@ -20,6 +23,7 @@ type Initial = {
 export function ReciboForm({
   action,
   projetos,
+  emitentes,
   initial,
   edit = false,
   hoje,
@@ -27,6 +31,7 @@ export function ReciboForm({
 }: {
   action: (fd: FormData) => void | Promise<void>;
   projetos: ProjetoOpt[];
+  emitentes: EmitenteOpt[];
   initial?: Initial;
   edit?: boolean;
   hoje: string;
@@ -79,6 +84,17 @@ export function ReciboForm({
             {projetos.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className={formStyles.full}>
+          <span>Emitente *</span>
+          <select name="emitente" required defaultValue={initial?.emitente ?? emitentes[0]?.id ?? ""}>
+            {emitentes.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.label}
               </option>
             ))}
           </select>

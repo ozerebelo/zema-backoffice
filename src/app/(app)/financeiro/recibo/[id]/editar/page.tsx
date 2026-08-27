@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { Page } from "@/components/Page";
 import { ReciboForm, type ProjetoOpt } from "@/components/ReciboForm";
 import { updateRecibo } from "../../../actions";
+import { EMITENTES } from "@/lib/emitente";
 
 export const dynamic = "force-dynamic";
 
@@ -51,11 +52,13 @@ export default async function EditarReciboPage({ params }: { params: Promise<{ i
       <ReciboForm
         action={updateRecibo.bind(null, id)}
         projetos={projetos}
+        emitentes={EMITENTES.map((e) => ({ id: e.id, label: `${e.nome} · ${e.nif}` }))}
         edit
         submitLabel="Guardar alterações"
         hoje={new Date().toISOString().slice(0, 10)}
         initial={{
           projetoId: recibo.projetoId,
+          emitente: recibo.emitente ?? undefined,
           valor: Number(recibo.valor),
           data: recibo.data.toISOString().slice(0, 10),
           taxaIRS: Number(recibo.taxaIRS),
