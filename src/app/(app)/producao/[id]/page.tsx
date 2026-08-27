@@ -32,6 +32,7 @@ export default async function ProjetoDetailPage({
   const epCounts = [0, 0, 0, 0, 0];
   p.episodios.forEach((e) => (epCounts[Math.min(e.fase, 4)] += 1));
   const entregues = p.episodios.filter((e) => e.entregaReal).length;
+  const extrasTotal = p.episodios.reduce((s, e) => s + Number(e.extra), 0);
 
   const facts: { k: string; v: string }[] = [
     { k: "Cliente", v: p.cliente?.nome ?? "—" },
@@ -40,7 +41,13 @@ export default async function ProjetoDetailPage({
     { k: "Câmara", v: p.camera || "—" },
     { k: "Duração", v: p.duracao || "—" },
     { k: "DP", v: p.dp || "—" },
-    { k: "Valor", v: fmtMoney(Number(p.valor)) },
+    {
+      k: "Valor",
+      v:
+        extrasTotal > 0
+          ? `${fmtMoney(Number(p.valor))} (inclui ${fmtMoney(extrasTotal)} extra)`
+          : fmtMoney(Number(p.valor)),
+    },
     { k: "Episódios", v: p.eps ? String(p.eps) : "—" },
   ];
 
@@ -102,6 +109,8 @@ export default async function ProjetoDetailPage({
                       pontualidade: e.pontualidade,
                       reviewStatus: e.reviewStatus,
                       reviewRound: e.reviewRound,
+                      extra: Number(e.extra),
+                      extraNota: e.extraNota,
                     }}
                   />
                 ))}

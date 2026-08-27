@@ -102,6 +102,46 @@ export async function setEpisodeReview(
   revalidatePaths(ep.projetoId);
 }
 
+/** Horas extra pontuais num episódio. Não altera o valor/episódio (valEp):
+ *  ajusta o total do projeto pelo delta face ao extra anterior — coerente com
+ *  o facto de o `valor` ser recalculado só no formulário, não em add/remove. */
+export async function setEpisodeExtra(
+  episodeId: string,
+  valorExtra: number,
+  nota: string | null
+) {
+  const ep = await prisma.episodeSchedule.findUnique({ where: { id: episodeId } });
+  if (!ep) return;
+
+  const novo = Math.max(0, Math.round((Number.isFinite(valorExtra) ? valorExtra : 0) * 100) / 100);
+  const anterior = Number(ep.extra);
+  const delta = Math.round((novo - anterior) * 100) / 100;
+
+  await prisma.episodeSchedule.update({
+    where: { id: episodeId },
+    data: { extra: novo, extraNota: nota?.trim() || null },
+  });
+
+  if (delta !== 0) {
+    const proj = await prisma.projeto.findUnique({
+      where: { id: ep.projetoId },
+      select: { valor: true },
+    });
+    if (proj) {
+      const valor = Math.round((Number(proj.valor) + delta) * 100) / 100;
+      await prisma.projeto.update({ where: { id: ep.projetoId }, data: { valor } });
+    }
+    await logHistory(
+      ep.projetoId,
+      `Ep.${ep.idx + 1} — horas extra`,
+      `${delta > 0 ? "+" : ""}€${delta}${nota?.trim() ? ` (${nota.trim()})` : ""}`
+    );
+  }
+
+  revalidatePaths(ep.projetoId);
+  revalidatePath("/financeiro");
+}
+
 async function logHistory(projetoId: string, action: string, detail?: string) {
   const now = new Date();
   const tsRaw =

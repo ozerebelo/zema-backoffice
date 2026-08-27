@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { setEpisodeDate, setEpisodeFase, setEpisodeReview } from "@/app/(app)/producao/[id]/actions";
+import { setEpisodeDate, setEpisodeExtra, setEpisodeFase, setEpisodeReview } from "@/app/(app)/producao/[id]/actions";
 import { removeEpisode } from "@/app/(app)/producao/projeto-actions";
 import { PROD_PHASES_SHORT } from "@/lib/domain";
 import { ReviewControl } from "./ReviewControl";
@@ -19,6 +19,8 @@ type Ep = {
   pontualidade: string | null;
   reviewStatus: string | null;
   reviewRound: number;
+  extra: number;
+  extraNota: string | null;
 };
 
 const SHORT = ["CF", "GR", "VIS", "DL", "✓"];
@@ -27,6 +29,19 @@ export function EpisodeCard({ ep }: { ep: Ep }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [busy, setBusy] = useState(false);
+  const [extra, setExtra] = useState(String(ep.extra || ""));
+  const [extraNota, setExtraNota] = useState(ep.extraNota ?? "");
+
+  function saveExtra() {
+    const val = Number(extra) || 0;
+    if (val === (ep.extra || 0) && (extraNota.trim() || null) === (ep.extraNota ?? null)) return;
+    setBusy(true);
+    start(async () => {
+      await setEpisodeExtra(ep.id, val, extraNota || null);
+      router.refresh();
+      setBusy(false);
+    });
+  }
 
   function update(field: "rec" | "entrega" | "recReal" | "entregaReal", value: string) {
     setBusy(true);
@@ -128,6 +143,33 @@ export function EpisodeCard({ ep }: { ep: Ep }) {
             {s}
           </button>
         ))}
+      </div>
+
+      <div className={styles.extraRow}>
+        <label className={styles.extraVal}>
+          <span>Horas extra €</span>
+          <input
+            type="number"
+            step="0.01"
+            min={0}
+            placeholder="0"
+            value={extra}
+            disabled={pending || busy}
+            onChange={(e) => setExtra(e.target.value)}
+            onBlur={saveExtra}
+          />
+        </label>
+        <label className={styles.extraNota}>
+          <span>Descrição</span>
+          <input
+            type="text"
+            placeholder="ex.: 3h correções cliente"
+            value={extraNota}
+            disabled={pending || busy}
+            onChange={(e) => setExtraNota(e.target.value)}
+            onBlur={saveExtra}
+          />
+        </label>
       </div>
 
       <ReviewControl

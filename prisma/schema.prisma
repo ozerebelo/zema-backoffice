@@ -149,6 +149,8 @@ model EpisodeSchedule {
   pontualidade  String? // "no prazo" | "atraso Nd"
   reviewStatus  String?   @map("review_status") // null | aguarda_feedback | em_revisao | aprovado
   reviewRound   Int       @default(1) @map("review_round") // ronda de revisão (v1, v2…)
+  extra         Decimal   @default(0) @db.Decimal(10, 2) // horas extra pontuais: valor somado ao total do projeto (não altera valEp)
+  extraNota     String?   @map("extra_nota") // descrição do extra (ex.: "3h correções cliente")
 
   projeto Projeto @relation(fields: [projetoId], references: [id], onDelete: Cascade)
 

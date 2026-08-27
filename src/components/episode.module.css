@@ -105,3 +105,46 @@
   background: var(--navy);
   color: #fff;
 }
+
+/* Horas extra pontuais: valor + descrição, somam ao total sem mexer no valEp. */
+.extraRow {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+.extraVal,
+.extraNota {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.extraVal span,
+.extraNota span {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.extraRow input {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--cream);
+  color: var(--text-primary);
+  color-scheme: light dark;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.extraRow input:focus {
+  outline: none;
+  border-color: var(--border-strong);
+  background: var(--white);
+}

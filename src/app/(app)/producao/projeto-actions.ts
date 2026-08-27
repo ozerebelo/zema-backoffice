@@ -87,34 +87,6 @@ export async function updateProjeto(id: string, fd: FormData) {
   });
   if (!current) return;
 
-  await prisma.projeto.update({
-    where: { id },
-    data: {
-      titulo: f.titulo,
-      clienteId: f.clienteId,
-      tipo: f.tipo,
-      formato: f.formato,
-      camera: f.camera,
-      dp: f.dp,
-      duracao: f.duracao,
-      eps: f.eps,
-      valEp: f.valEp,
-      valor: f.valor,
-      fase: f.fase,
-      recepcao: f.recepcao,
-      prazo: f.prazo,
-      internacional: f.internacional,
-      notas: f.notas,
-      ...(f.color ? { color: f.color } : {}),
-    },
-  });
-
-  // A proposta espelha os termos financeiros do projeto — manter em sincronia.
-  await prisma.proposta.updateMany({
-    where: { projetoId: id },
-    data: { internacional: f.internacional, valor: f.valor },
-  });
-
   // Sincronizar nº de episódios (acrescenta no fim / remove os últimos)
   const have = current.episodios.length;
   if (f.eps > have) {
@@ -129,6 +101,41 @@ export async function updateProjeto(id: string, fd: FormData) {
     const toRemove = current.episodios.slice(f.eps).map((e) => e.id);
     await prisma.episodeSchedule.deleteMany({ where: { id: { in: toRemove } } });
   }
+
+  // f.valor é o valor-base (valEp×eps ou total escrito). As horas extra pontuais
+  // vivem nos episódios que sobram e somam-se ao total — sem alterar valEp.
+  const extras = current.episodios
+    .slice(0, f.eps)
+    .reduce((s, e) => s + Number(e.extra), 0);
+  const valor = Math.round((f.valor + extras) * 100) / 100;
+
+  await prisma.projeto.update({
+    where: { id },
+    data: {
+      titulo: f.titulo,
+      clienteId: f.clienteId,
+      tipo: f.tipo,
+      formato: f.formato,
+      camera: f.camera,
+      dp: f.dp,
+      duracao: f.duracao,
+      eps: f.eps,
+      valEp: f.valEp,
+      valor,
+      fase: f.fase,
+      recepcao: f.recepcao,
+      prazo: f.prazo,
+      internacional: f.internacional,
+      notas: f.notas,
+      ...(f.color ? { color: f.color } : {}),
+    },
+  });
+
+  // A proposta preserva o valor originalmente proposto (base, sem extras).
+  await prisma.proposta.updateMany({
+    where: { projetoId: id },
+    data: { internacional: f.internacional, valor: f.valor },
+  });
 
   revalidatePath(`/producao/${id}`);
   revalidatePath("/producao");
