@@ -13,6 +13,7 @@ export type ReciboLike = {
   taxaIRS: unknown;
   taxaIVA: unknown | null;
   data: Date;
+  dataPagamento?: Date | null;
 };
 
 /** Número fiscal do recibo no formato {ano}/{NNN} (ex.: 2026/014). */
@@ -48,8 +49,15 @@ export function yearSummary(recibos: ReciboLike[], year: number): YearSummary {
     base: 0, iva: 0, irs: 0, internacional: 0, n: 0,
   };
   for (const r of recibos) {
-    if (r.data.getUTCFullYear() !== year) continue;
     const t = reciboImpostos(r);
+
+    // Tesouraria: conta no ano em que o dinheiro ENTROU (IRS é regime de caixa).
+    if (r.pago && (r.dataPagamento ?? r.data).getUTCFullYear() === year) {
+      s.cobrado += t.liquido;
+    }
+
+    // Faturação: agrupada pelo ano de emissão do documento.
+    if (r.data.getUTCFullYear() !== year) continue;
     const v = Number(r.valor);
     s.bruto += t.bruto;
     s.liquido += t.liquido;
@@ -57,8 +65,7 @@ export function yearSummary(recibos: ReciboLike[], year: number): YearSummary {
     s.irs += t.irs;
     if (r.internacional) s.internacional += v;
     else s.base += v;
-    if (r.pago) s.cobrado += t.liquido;
-    else s.porCobrar += t.liquido;
+    if (!r.pago) s.porCobrar += t.liquido;
     s.n += 1;
   }
   return s;

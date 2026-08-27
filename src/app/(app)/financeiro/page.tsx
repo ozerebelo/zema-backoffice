@@ -66,14 +66,17 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
   const curQ = Math.ceil((nowD.getUTCMonth() + 1) / 3);
   let ivaTrimestre = 0;
   for (const r of recibos) {
-    if (r.internacional) continue;
+    // sem documento fiscal não há IVA a entregar ao Estado
+    if (r.internacional || r.semRecibo) continue;
     if (r.data.getUTCFullYear() === curYear && getQuarter(r.data) === curQ) ivaTrimestre += reciboImpostos(r).iva;
   }
 
-  // Líquido recebido no ano seleccionado
+  // Líquido recebido no ano seleccionado — conta pelo ano em que o dinheiro
+  // ENTROU (IRS é regime de caixa), não pelo da emissão.
   let liquidoAno = 0;
   for (const r of recibos) {
-    if (r.pago && r.data.getUTCFullYear() === ano) liquidoAno += reciboImpostos(r).liquido;
+    const quando = r.dataPagamento ?? r.data;
+    if (r.pago && quando.getUTCFullYear() === ano) liquidoAno += reciboImpostos(r).liquido;
   }
 
   const TABS = [
@@ -443,8 +446,10 @@ function CobrarTab({ recibos }: any) {
 
 /* ── Trimestres IVA (como o original) ────────────────────────── */
 function IvaTab({ recibos, ivaStates }: any) {
-  const nationals = recibos.filter((r: any) => !r.internacional);
-  const intCount = recibos.length - nationals.length;
+  // Só documentos fiscais nacionais geram IVA: exclui internacionais e os
+  // pagamentos registados sem recibo emitido.
+  const nationals = recibos.filter((r: any) => !r.internacional && !r.semRecibo);
+  const intCount = recibos.filter((r: any) => r.internacional).length;
 
   const groups = new Map<string, { year: number; q: number; recs: any[] }>();
   for (const r of nationals) {

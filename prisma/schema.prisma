@@ -243,13 +243,16 @@ model Recibo {
   notas         String?
   internacional Boolean  @default(false)
   pago          Boolean  @default(false)
-  semRecibo     Boolean  @default(false) @map("sem_recibo") // pagamento sem documento fiscal — fora do CSV p/ contabilidade
+  dataPagamento DateTime? @map("data_pagamento") @db.Date // quando o dinheiro entrou (IRS é regime de caixa)
+  semRecibo     Boolean  @default(false) @map("sem_recibo") // pagamento sem documento fiscal — fora do CSV e do IVA
   taxaIRS       Decimal  @default(0.23) @map("taxa_irs") @db.Decimal(4, 3)
   taxaIVA       Decimal? @default(0.23) @map("taxa_iva") @db.Decimal(4, 3)
   createdAt     DateTime @default(now()) @map("created_at")
 
   projeto Projeto @relation(fields: [projetoId], references: [id], onDelete: Cascade)
 
+  // Cada emitente (NIF) tem a sua própria série sequencial por ano.
+  @@unique([ano, emitente, numero])
   @@index([projetoId])
   @@index([data])
   @@map("recibo")

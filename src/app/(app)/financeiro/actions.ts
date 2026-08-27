@@ -49,7 +49,12 @@ async function syncPropostaEstado(projetoId: string) {
 export async function toggleReciboPago(id: string) {
   const r = await prisma.recibo.findUnique({ where: { id } });
   if (!r) return;
-  await prisma.recibo.update({ where: { id }, data: { pago: !r.pago } });
+  const pago = !r.pago;
+  await prisma.recibo.update({
+    where: { id },
+    // ao marcar recebido regista a data de hoje (editável no formulário)
+    data: { pago, dataPagamento: pago ? (r.dataPagamento ?? new Date()) : null },
+  });
   await syncPropostaEstado(r.projetoId);
   revalidateFin();
 }
@@ -82,21 +87,26 @@ export async function createRecibo(fd: FormData) {
   if (!projetoId || !data) return;
 
   const internacional = fd.get("internacional") === "on";
-  // Número sequencial por ano de emissão ({ano}/{numero}), imutável após criado.
+  // Série sequencial por EMITENTE e ano ({ano}/{numero}): cada NIF é um sujeito
+  // passivo distinto, com a sua própria numeração. Imutável após criado.
   const ano = data.getUTCFullYear();
+  const emitente = String(fd.get("emitente") ?? "").trim() || null;
+  const pago = fd.get("pago") === "on";
   await prisma.$transaction(async (tx) => {
-    const last = await tx.recibo.aggregate({ where: { ano }, _max: { numero: true } });
+    const last = await tx.recibo.aggregate({ where: { ano, emitente }, _max: { numero: true } });
     await tx.recibo.create({
       data: {
         projetoId,
         ano,
         numero: (last._max.numero ?? 0) + 1,
-        emitente: String(fd.get("emitente") ?? "").trim() || null,
+        emitente,
         valor: Number(fd.get("valor")) || 0,
         data,
         notas: (String(fd.get("notas") ?? "").trim() || null) as string | null,
         internacional,
-        pago: fd.get("pago") === "on",
+        pago,
+        // data de recebimento: a indicada, ou a de emissão se já vem recebido
+        dataPagamento: pago ? (parseDateOnly(fd.get("dataPagamento")) ?? data) : null,
         semRecibo: fd.get("semRecibo") === "on",
         taxaIRS: internacional ? 0 : Number(fd.get("taxaIRS") ?? 0.23),
         taxaIVA: internacional ? 0 : Number(fd.get("taxaIVA") ?? 0.23),
@@ -138,6 +148,8 @@ export async function updateRecibo(id: string, fd: FormData) {
       notas: (String(fd.get("notas") ?? "").trim() || null) as string | null,
       internacional,
       pago: fd.get("pago") === "on",
+      dataPagamento:
+        fd.get("pago") === "on" ? (parseDateOnly(fd.get("dataPagamento")) ?? data) : null,
       semRecibo: fd.get("semRecibo") === "on",
       taxaIRS: internacional ? 0 : Number(fd.get("taxaIRS") ?? 0.23),
       taxaIVA: internacional ? 0 : Number(fd.get("taxaIVA") ?? 0.23),

@@ -18,6 +18,7 @@ type Initial = {
   notas?: string;
   internacional?: boolean;
   pago?: boolean;
+  dataPagamento?: string;
   semRecibo?: boolean;
 };
 
@@ -41,6 +42,8 @@ export function ReciboForm({
   const [projetoId, setProjetoId] = useState(initial?.projetoId ?? "");
   const [valor, setValor] = useState(initial?.valor != null ? String(initial.valor) : "");
   const [autofilled, setAutofilled] = useState(false);
+  const [pago, setPago] = useState(initial?.pago ?? false);
+  const [dataPag, setDataPag] = useState(initial?.dataPagamento ?? initial?.data ?? hoje);
 
   const sel = projetos.find((p) => p.id === projetoId);
   const restante = sel ? sel.restante : null;
@@ -162,9 +165,29 @@ export function ReciboForm({
         </label>
 
         <label className={`${formStyles.full} ${formStyles.check}`} style={{ background: "var(--blue-bg)" }}>
-          <input type="checkbox" name="pago" defaultChecked={initial?.pago ?? false} />
+          <input
+            type="checkbox"
+            name="pago"
+            checked={pago}
+            onChange={(e) => setPago(e.target.checked)}
+          />
           <span style={{ color: "var(--blue-fg)" }}>Já recebido</span>
         </label>
+
+        {pago && (
+          <label>
+            <span>Data de recebimento</span>
+            <input
+              name="dataPagamento"
+              type="date"
+              value={dataPag}
+              onChange={(e) => setDataPag(e.target.value)}
+            />
+            <small style={{ marginTop: 4, fontSize: 11, color: "var(--text-muted)" }}>
+              Conta para o ano em que o dinheiro entrou
+            </small>
+          </label>
+        )}
       </div>
 
       <div className={formStyles.actions}>
