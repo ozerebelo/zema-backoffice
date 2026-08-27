@@ -47,6 +47,7 @@ model Cliente {
   empresa   String
   nome      String
   nif       String?
+  morada    String? // morada fiscal — usada no recibo/PDF
   email     String?
   tel       String?
   notas     String?

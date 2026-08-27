@@ -8,6 +8,7 @@ type Initial = {
   empresa?: string;
   nome?: string;
   nif?: string | null;
+  morada?: string | null;
   email?: string | null;
   tel?: string | null;
   notas?: string | null;
@@ -41,6 +42,14 @@ export function ClienteForm({
         <label>
           <span>NIF</span>
           <input name="nif" defaultValue={initial?.nif ?? ""} />
+        </label>
+        <label className={styles.full}>
+          <span>Morada</span>
+          <input
+            name="morada"
+            defaultValue={initial?.morada ?? ""}
+            placeholder="Ex: Rua Exemplo 12 · 1000-000 Lisboa"
+          />
         </label>
         <label>
           <span>Email</span>

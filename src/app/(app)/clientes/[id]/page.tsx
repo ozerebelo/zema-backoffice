@@ -112,8 +112,9 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
         </div>
 
         <aside>
-          {(c.email || c.tel || c.notas) && (
+          {(c.email || c.tel || c.morada || c.notas) && (
             <div className="card" style={{ padding: "14px 16px", marginBottom: 16 }}>
+              {c.morada && <div className={styles.infoRow}><span>Morada</span><b>{c.morada}</b></div>}
               {c.email && <div className={styles.infoRow}><span>Email</span><a href={`mailto:${c.email}`}>{c.email}</a></div>}
               {c.tel && <div className={styles.infoRow}><span>Tel</span><b>{c.tel}</b></div>}
               {c.notas && <div className={styles.notas}>{c.notas}</div>}

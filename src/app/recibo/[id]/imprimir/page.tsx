@@ -72,7 +72,7 @@ export default async function ReciboImprimirPage({ params }: { params: Promise<{
           <div className={styles.partyK}>Cliente</div>
           <div className={styles.partyName}>{cliente?.nome ?? r.projeto?.cliente?.empresa ?? "—"}</div>
           <div className={styles.partyMeta}>
-            {[cliente?.nif ? `NIF ${cliente.nif}` : null, cliente?.email, cliente?.tel]
+            {[cliente?.nif ? `NIF ${cliente.nif}` : null, cliente?.morada]
               .filter(Boolean)
               .join(" · ") || "—"}
           </div>

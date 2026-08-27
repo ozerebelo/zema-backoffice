@@ -35,6 +35,7 @@ function readCliente(fd: FormData) {
     nome,
     empresa: str(fd.get("empresa")) ?? nome,
     nif: str(fd.get("nif")),
+    morada: str(fd.get("morada")),
     email: str(fd.get("email")),
     tel: str(fd.get("tel")),
     notas: str(fd.get("notas")),

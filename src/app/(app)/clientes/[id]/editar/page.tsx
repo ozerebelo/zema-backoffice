@@ -33,6 +33,7 @@ export default async function EditarClientePage({ params }: { params: Promise<{ 
           empresa: c.empresa,
           nome: c.nome,
           nif: c.nif,
+          morada: c.morada,
           email: c.email,
           tel: c.tel,
           notas: c.notas,

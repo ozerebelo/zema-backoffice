@@ -23,7 +23,7 @@ export async function GET(req: Request) {
   const rows = recibos.filter((r) => r.data.getUTCFullYear() === ano);
 
   const header = [
-    "Nº", "Data", "Emitente", "NIF emitente", "Projeto", "Cliente", "NIF cliente",
+    "Nº", "Data", "Emitente", "NIF emitente", "Projeto", "Cliente", "NIF cliente", "Morada cliente",
     "Base", "IVA", "IRS", "Líquido", "C/ IVA", "Internacional",
   ];
   const lines = [header.join(";")];
@@ -39,6 +39,7 @@ export async function GET(req: Request) {
         r.projeto?.titulo ?? "—",
         r.projeto?.cliente?.nome ?? "—",
         r.projeto?.cliente?.nif ?? "",
+        r.projeto?.cliente?.morada ?? "",
         money(Number(r.valor)),
         money(t.iva),
         money(t.irs),
