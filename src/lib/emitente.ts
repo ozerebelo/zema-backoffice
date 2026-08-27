@@ -18,25 +18,25 @@ export type Emitente = {
 
 export const EMITENTES: Emitente[] = [
   {
-    id: "a",
-    nome: "Zema Studios",
+    id: "jmr",
+    nome: "José Miguel Neves Rebelo",
     atividade: "Pós-produção · Color grading",
-    morada: "Rua Exemplo, 00 · 1000-000 Lisboa",
-    nif: "PT 000 000 000",
-    email: "geral@zemastudios.pt",
-    tel: "+351 000 000 000",
-    iban: "PT50 0000 0000 0000 0000 0000 0",
+    morada: "Rua Costa Pinto 163 1B · 2770-047 Paço de Arcos",
+    nif: "240082982",
+    email: "",
+    tel: "",
+    iban: "",
     notaFiscal: "IVA conforme regime aplicável. Retenção de IRS quando aplicável.",
   },
   {
-    id: "b",
-    nome: "Zema Studios (NIF 2)",
+    id: "mbb",
+    nome: "Maria Belo Lopes Braga",
     atividade: "Pós-produção · Color grading",
-    morada: "Rua Exemplo, 00 · 1000-000 Lisboa",
-    nif: "PT 111 111 111",
-    email: "geral@zemastudios.pt",
-    tel: "+351 000 000 000",
-    iban: "PT50 0000 0000 0000 0000 0000 0",
+    morada: "Rua Costa Pinto 163 1B · 2770-047 Paço de Arcos",
+    nif: "219807566",
+    email: "",
+    tel: "",
+    iban: "",
     notaFiscal: "IVA conforme regime aplicável. Retenção de IRS quando aplicável.",
   },
 ];
@@ -50,4 +50,4 @@ export function getEmitente(id?: string | null): Emitente {
 
 // Caminho do logótipo no cabeçalho do PDF (ficheiro em /public). Vazio → usa o
 // nome em texto. Definir para "/zema-logo.png" quando o ficheiro estiver lá.
-export const LOGO_SRC = "";
+export const LOGO_SRC = "/zema-logo.png";

@@ -50,8 +50,12 @@ export default async function ReciboImprimirPage({ params }: { params: Promise<{
             {emitente.morada}
             <br />
             NIF <b>{emitente.nif}</b>
-            <br />
-            {emitente.email} · {emitente.tel}
+            {(emitente.email || emitente.tel) && (
+              <>
+                <br />
+                {[emitente.email, emitente.tel].filter(Boolean).join(" · ")}
+              </>
+            )}
           </div>
         </header>
 
@@ -125,8 +129,12 @@ export default async function ReciboImprimirPage({ params }: { params: Promise<{
           {r.internacional
             ? "Operação internacional — reverse charge (sem IVA nem IRS)."
             : emitente.notaFiscal}
-          <br />
-          Pagamento por transferência — IBAN {emitente.iban}.
+          {emitente.iban && (
+            <>
+              <br />
+              Pagamento por transferência — IBAN {emitente.iban}.
+            </>
+          )}
         </div>
       </div>
     </div>
