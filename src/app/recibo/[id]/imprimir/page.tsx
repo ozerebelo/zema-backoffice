@@ -11,6 +11,9 @@ export const dynamic = "force-dynamic";
 const fmtData = (d: Date) =>
   `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
 
+/** 0.23 → "23%" */
+const pct = (taxa: number) => `${Math.round(taxa * 1000) / 10}%`;
+
 export default async function ReciboImprimirPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const r = await prisma.recibo.findUnique({
@@ -23,6 +26,9 @@ export default async function ReciboImprimirPage({ params }: { params: Promise<{
   const num = reciboNumero(r);
   const cliente = r.projeto?.cliente;
   const emitente = getEmitente(r.emitente);
+  // Documento para o cliente: o IVA acresce e o IRS é retido por ele, logo o
+  // que transfere é base + IVA − retenção (≠ do "líquido" interno, base − IRS).
+  const aTransferir = Math.round((imp.bruto - imp.irs) * 100) / 100;
 
   return (
     <div className={styles.wrap}>
@@ -104,22 +110,24 @@ export default async function ReciboImprimirPage({ params }: { params: Promise<{
                 <td className={styles.r}>{fmtMoney(Number(r.valor))}</td>
               </tr>
               {!r.internacional && (
-                <tr>
-                  <td className={styles.lbl}>IVA</td>
-                  <td className={styles.r}>{fmtMoney(imp.iva)}</td>
-                </tr>
-              )}
-              {!r.internacional && (
-                <tr>
-                  <td className={styles.lbl}>Retenção IRS</td>
-                  <td className={`${styles.r} ${styles.neg}`}>− {fmtMoney(imp.irs)}</td>
-                </tr>
+                <>
+                  <tr>
+                    <td className={styles.lbl}>IVA ({pct(imp.taxaIVA)})</td>
+                    <td className={styles.r}>{fmtMoney(imp.iva)}</td>
+                  </tr>
+                  <tr>
+                    <td className={styles.lbl}>Total c/ IVA</td>
+                    <td className={styles.r}>{fmtMoney(imp.bruto)}</td>
+                  </tr>
+                  <tr>
+                    <td className={styles.lbl}>Retenção na fonte IRS ({pct(imp.taxaIRS)})</td>
+                    <td className={`${styles.r} ${styles.neg}`}>− {fmtMoney(imp.irs)}</td>
+                  </tr>
+                </>
               )}
               <tr className={styles.grand}>
-                <td className={styles.lbl}>Total a receber</td>
-                <td className={`${styles.r} ${styles.val}`}>
-                  {fmtMoney(r.internacional ? Number(r.valor) : imp.liquido)}
-                </td>
+                <td className={styles.lbl}>Valor a transferir</td>
+                <td className={`${styles.r} ${styles.val}`}>{fmtMoney(aTransferir)}</td>
               </tr>
             </tbody>
           </table>
