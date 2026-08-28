@@ -63,6 +63,13 @@ export function Sidebar({
             <div className={styles.userName}>{userName}</div>
           </div>
           <div className={styles.footerActions}>
+            <a
+              href="/backup"
+              className={styles.logout}
+              title="Descarregar backup de todos os dados (JSON)"
+            >
+              <i className="ti ti-download" />
+            </a>
             <ThemeToggle />
             <form action="/logout" method="post">
               <button type="submit" className={styles.logout} title="Sair">

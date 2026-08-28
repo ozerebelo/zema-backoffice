@@ -36,6 +36,9 @@ export default async function EditarReciboPage({ params }: { params: Promise<{ i
       return {
         id: p.id,
         label: `${p.titulo}${p.cliente ? ` · ${p.cliente.nome}` : ""}`,
+        cliente: p.cliente?.nome ?? null,
+        temNif: !!p.cliente?.nif,
+        temMorada: !!p.cliente?.morada,
         restante: Math.max(0, Math.round((Number(p.valor) - faturado) * 100) / 100),
       };
     });

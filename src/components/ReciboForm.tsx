@@ -4,7 +4,14 @@ import { useState, type FormEvent } from "react";
 import { fmtMoney } from "@/lib/dates";
 import formStyles from "./form.module.css";
 
-export type ProjetoOpt = { id: string; label: string; restante: number };
+export type ProjetoOpt = {
+  id: string;
+  label: string;
+  restante: number;
+  cliente?: string | null;
+  temNif?: boolean;
+  temMorada?: boolean;
+};
 
 export type EmitenteOpt = { id: string; label: string };
 
@@ -92,6 +99,29 @@ export function ReciboForm({
             ))}
           </select>
         </label>
+
+        {sel && (sel.temNif === false || sel.temMorada === false) && (
+          <div className={formStyles.full}>
+            <div
+              style={{
+                display: "flex", alignItems: "center", gap: 8, padding: "9px 12px",
+                fontSize: 12, borderRadius: 8,
+                color: "var(--amber-fg)",
+                background: "rgba(217,119,6,0.1)",
+                border: "1px solid rgba(217,119,6,0.25)",
+              }}
+            >
+              <i className="ti ti-alert-triangle" />
+              <span style={{ flex: 1 }}>
+                {sel.cliente ?? "O cliente"} não tem{" "}
+                {[sel.temNif === false ? "NIF" : null, sel.temMorada === false ? "morada" : null]
+                  .filter(Boolean)
+                  .join(" nem ")}
+                {" "}— o recibo sai incompleto.
+              </span>
+            </div>
+          </div>
+        )}
 
         <label className={formStyles.full}>
           <span>Emitente *</span>
