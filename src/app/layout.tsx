@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, Playfair_Display } from "next/font/google";
 import "@tabler/icons-webfont/tabler-icons.min.css";
 import "./globals.css";
@@ -15,6 +15,12 @@ const playfair = Playfair_Display({
   style: ["normal", "italic"],
   variable: "--font-playfair",
 });
+
+// Sem isto o telemóvel renderiza a 980px e encolhe tudo.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: "Backoffice — zema studios",

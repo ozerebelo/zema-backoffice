@@ -93,7 +93,7 @@
 /* ── Stats ── */
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
   margin-bottom: 18px;
 }
@@ -362,3 +362,10 @@
   color: var(--text-muted);
 }
 .ivaDeadline .badge { background: transparent; }
+
+@media (max-width: 860px) {
+  .table { min-width: 560px; }
+  .projRow, .recRow { flex-wrap: wrap; gap: 6px; }
+  .tabs { overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+}

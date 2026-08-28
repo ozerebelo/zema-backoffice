@@ -203,3 +203,78 @@
   overflow-y: auto;
   min-height: 0;
 }
+
+/* ── Telemóvel / tablet estreito ──────────────────────────────────
+   A sidebar de 230px ocupava mais de metade do ecrã; passa a barra
+   horizontal no topo, com a navegação em scroll lateral. */
+@media (max-width: 860px) {
+  .app {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    padding: 6px;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+  /* o wordmark rouba a largura que a navegação precisa */
+  .logo { display: none; }
+  .nav {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  /* cada secção é um wrapper: também tem de ficar em linha */
+  .nav > div {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .navSection { display: none; } /* títulos de secção não cabem */
+  /* só ícones: 6 itens com label não cabem em 375px sem scroll */
+  .navItem {
+    padding: 9px 5px;
+    border-radius: 8px;
+    position: relative;
+  }
+  .navItem span:not([class]) { display: none; }
+  .navItem i { font-size: 18px; }
+  .navItem .badge {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    font-size: 8.5px;
+    min-width: 14px;
+    padding: 0 3px;
+    line-height: 14px;
+  }
+  .footer {
+    padding: 0;
+    border-top: none;
+    flex-shrink: 0;
+  }
+  .userPill { padding: 2px 4px; gap: 4px; }
+  .userPill > div:nth-child(2) { display: none; } /* nome do utilizador */
+  .avatar { display: none; } /* só as ações cabem */
+  .main { overflow: visible; }
+  .topbar {
+    height: auto;
+    min-height: var(--header-h);
+    padding: 10px 14px;
+    flex-wrap: wrap;
+  }
+  .content { padding: 14px !important; }
+}

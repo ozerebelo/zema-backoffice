@@ -93,3 +93,8 @@
   border-radius: 8px;
 }
 .aviso span { flex: 1; }
+
+@media (max-width: 860px) {
+  .wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table { min-width: 640px; }
+}

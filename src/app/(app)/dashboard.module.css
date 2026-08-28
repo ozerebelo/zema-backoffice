@@ -129,3 +129,8 @@
   color: var(--text-primary);
   line-height: 1.4;
 }
+
+@media (max-width: 860px) {
+  .statsGrid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .grid2 { grid-template-columns: 1fr; }
+}
